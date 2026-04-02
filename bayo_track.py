@@ -1,6 +1,7 @@
-import phonenumbers, os
+import phonenumbers
 from phonenumbers import geocoder, carrier
 from opencage.geocoder import OpenCageGeocode
+import streamlit as st
 
 # --- YOUR ACTIVE API KEY ---
 API_KEY = "60f755b8fa124caf8e766c27758d4b23"
@@ -32,22 +33,10 @@ Coordinates: {lat}, {lng}
 Map Link: https://www.google.com/maps?q={lat},{lng}
 ---------------------------
 """
-            print(report)
-
-            # Save to a secret file for your records
-            with open("recon_targets.txt", "a") as f:
-                f.write(report)
-
-            speech = f"Oga, I don pin am. Target is in {location_desc}. Coordinates: {lat}, {lng}."
-            os.system(f'termux-tts-speak "{speech}"')
+            # Return the data instead of just printing it
+            return True, report, lat, lng
         else:
-            print("[-] Geocoding failed to find precise coordinates.")
-            os.system('termux-tts-speak "Boss, I see the region but I no fit get the coordinates."')
+            return False, "Boss, I see the region but I no fit get the coordinates.", 0, 0
 
     except Exception as e:
-        print(f"Error: {e}")
-        os.system('termux-tts-speak "Boss, check the number format. Add + sign."')
-
-if __name__ == "__main__":
-    target = input("Enter Phone Number (+234...): ")
-    track_number(target)
+        return False, f"Error: {e}. Ensure you include the + sign (e.g., +234...)", 0, 0
