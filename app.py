@@ -2,38 +2,108 @@ import streamlit as st
 from groq import Groq
 import os, requests, subprocess, datetime
 
-# --- IMPORT YOUR BAYOSPEL MODULES ---
+# --- IMPORT ALL TACTICAL MODULES ---
 import bayo_track
 import bayo_recon
 import bayo_reader
+import bayo_exploit
+import bayo_brute
 
-# --- TACTICAL UI ---
-st.set_page_config(page_title="BAYOSPEL CLOUD OS", layout="wide")
+# --- TACTICAL UI SETUP ---
+st.set_page_config(page_title="BAYOSPEL GLOBAL CLOUD", layout="wide", page_icon="💀")
+
 st.markdown("""
     <style>
-    .stApp { background-color: #050505; color: #00FF41; font-family: monospace; }
+    .stApp { background-color: #050505; color: #00FF41; font-family: 'Courier New', monospace; }
     .stTextInput>div>div>input { background-color: #111; color: #00FF41; border: 1px solid #00FF41; }
-    .stButton>button { background-color: #00FF41; color: black; width: 100%; border-radius: 0px; }
+    .stButton>button { background-color: #00FF41; color: black; font-weight: bold; border-radius: 0px; }
+    [data-testid="stSidebar"] { background-color: #0a0a0a; border-right: 1px solid #00FF41; }
     </style>
     """, unsafe_allow_html=True)
 
 client = Groq(api_key=st.secrets["GROQ_API_KEY"])
 
-# --- HACKING LOGIC ---
-def find_admin_pages(url):
-    if not url.startswith('http'): url = 'http://' + url
-    paths = ['/admin', '/login', '/wp-admin', '/admin.php', '/panel', '/dashboard']
-    found_urls = []
-    for path in paths:
-        try:
-            full_url = url.rstrip('/') + path
-            r = requests.get(full_url, timeout=3)
-            if r.status_code == 200: found_urls.append(full_url)
-        except: continue
-    return found_urls
+# --- SIDEBAR COMMAND CENTER ---
+st.sidebar.title("💀 BAYOSPEL OS v4.0")
+menu = st.sidebar.radio("SQUAD SELECTION", [
+    "AI Commander", 
+    "Web Recon (Scanner)", 
+    "Target Tracker (OSINT)", 
+    "Exploit Lab (CVE)", 
+    "Brute Analyzer (Sniffer)"
+])
 
-# --- MAIN INTERFACE ---
-st.title("💀 BAYOSPEL TACTICAL CLOUD")
+# --- 1. AI COMMANDER (Integrated with Brain) ---
+if menu == "AI Commander":
+    st.title("📟 TACTICAL BRAIN INTERFACE")
+    
+    if "messages" not in st.session_state:
+        st.session_state.messages = []
+
+    for m in st.session_state.messages:
+        with st.chat_message(m["role"]): st.markdown(m["content"])
+
+    if prompt := st.chat_input("Commander, awaiting orders..."):
+        st.chat_message("user").markdown(prompt)
+        st.session_state.messages.append({"role": "user", "content": prompt})
+        
+        # Pull private context from bayo_reader
+        brain_data = bayo_reader.get_context_prompt()
+
+        with st.chat_message("assistant"):
+            res = client.chat.completions.create(
+                model="llama-3.3-70b-versatile",
+                messages=[
+                    {"role": "system", "content": f"You are Bayospel Cloud AI. Use Naija slang. {brain_data}"}
+                ] + st.session_state.messages
+            )
+            reply = res.choices[0].message.content
+            st.markdown(reply)
+            st.session_state.messages.append({"role": "assistant", "content": reply})
+
+# --- 2. WEB RECON (bayo_recon) ---
+elif menu == "Web Recon (Scanner)":
+    st.title("📡 GLOBAL RECONNAISSANCE")
+    target = st.text_input("Enter Target URL:")
+    if st.button("Initialize Full Recon"):
+        if target:
+            with st.spinner("Probing target..."):
+                report = bayo_recon.full_recon(target)
+                st.code(report)
+        else: st.error("Target missing, Boss.")
+
+# --- 3. TARGET TRACKER (bayo_track) ---
+elif menu == "Target Tracker (OSINT)":
+    st.title("📍 GEOSPATIAL TRACKING")
+    val = st.text_input("Enter Number (+234...) or IP:")
+    if st.button("Deep Trace"):
+        with st.spinner("Scanning satellite data..."):
+            success, report, lat, lng = bayo_track.track_number(val)
+            if success:
+                st.success("Target Pinpointed!")
+                st.markdown(report)
+                if lat != 0:
+                    st.map(data={"lat": [lat], "lon": [lng]})
+            else:
+                st.error(report)
+
+# --- 4. EXPLOIT LAB (bayo_exploit) ---
+elif menu == "Exploit Lab (CVE)":
+    st.title("🔬 VULNERABILITY RESEARCH")
+    query = st.text_input("Software/Service Name (e.g. Apache):")
+    if st.button("Fetch NIST CVEs"):
+        with st.spinner("Querying NIST Database..."):
+            results = bayo_exploit.search_cve(query)
+            st.markdown(results)
+
+# --- 5. BRUTE ANALYZER (bayo_brute) ---
+elif menu == "Brute Analyzer (Sniffer)":
+    st.title("💀 FORM SNIFFER & ANALYZER")
+    login_url = st.text_input("Enter Login Page URL:")
+    if st.button("Sniff Form Parameters"):
+        with st.spinner("Analyzing HTML structure..."):
+            analysis = bayo_brute.analyze_target(login_url)
+            st.code(analysis)
 
 menu = st.sidebar.radio("COMMAND CENTER", ["AI Commander", "Web Recon", "Target Tracker", "Exploit Lab"])
 
