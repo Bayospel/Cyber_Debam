@@ -1,5 +1,6 @@
 import streamlit as st
 import os
+import random
 from groq import Groq
 import bayo_track
 import bayo_recon
@@ -9,37 +10,30 @@ import bayo_brute
 # --- TACTICAL UI SETUP ---
 st.set_page_config(page_title="BAYOSPEL GLOBAL OS", layout="wide")
 
-# THE ULTIMATE VISIBILITY FIX
+# THE ULTIMATE VISIBILITY FIX (CSS)
 st.markdown("""
 <style>
-    /* Main Background */
     .stApp { background-color: #050505; color: #00FF41; font-family: 'Courier New', monospace; }
-    
-    /* Sidebar Text Visibility */
     [data-testid="stSidebar"] { background-color: #0a0a0a; border-right: 1px solid #00FF41; }
-    [data-testid="stSidebar"] .stText, [data-testid="stSidebar"] p, [data-testid="stSidebar"] label { 
-        color: #FFFFFF !important; 
-    }
-    [data-testid="stSidebar"] .st-emotion-cache-167880x { color: #00FF41 !important; }
-
-    /* CHAT BUBBLE FIX */
+    [data-testid="stSidebar"] p, [data-testid="stSidebar"] label { color: #FFFFFF !important; }
     .stChatMessage { background-color: #1a1a1a !important; border: 1px solid #333; border-radius: 10px; padding: 10px; }
-    .stChatMessage p, .stChatMessage li, .stChatMessage span { 
-        color: #FFFFFF !important; 
-        font-size: 1.1rem !important;
-    }
+    .stChatMessage p, .stChatMessage li, .stChatMessage span { color: #FFFFFF !important; font-size: 1.1rem !important; }
     .stChatMessage strong { color: #00FF41 !important; }
-
-    /* Input Box Placeholder & Text */
     .stChatInput textarea { color: #00FF41 !important; }
-    
-    /* Buttons */
     .stButton>button { background-color: #00FF41; color: black; font-weight: bold; width: 100%; }
 </style>
 """, unsafe_allow_html=True)
 
-# --- CORE ENGINE ---
-client = Groq(api_key=st.secrets["GROQ_API_KEY"])
+# --- SMART KEY ROTATOR ENGINE ---
+def get_groq_client():
+    try:
+        # Pulls the list of keys from secrets
+        keys = st.secrets["GROQ_KEYS"]
+        selected_key = random.choice(keys)
+        return Groq(api_key=selected_key)
+    except Exception as e:
+        st.error("Secrets Error: Make sure GROQ_KEYS is a list in your Streamlit settings!")
+        return None
 
 def get_manual():
     try:
@@ -53,7 +47,7 @@ st.sidebar.title("💀 BAYOSPEL OS v4.0")
 st.sidebar.markdown(f"<span style='color:#00FF41'>Commander:</span> <span style='color:white'>Bayonle</span>", unsafe_allow_html=True)
 menu = st.sidebar.radio("SQUAD SELECTION", ["AI Commander", "Web Recon (Scanner)", "Target Tracker (OSINT)", "Exploit Lab (CVE)", "Brute Force Simulator"])
 
-# --- MODULE 1: AI COMMANDER ---
+# --- MODULE 1: AI COMMANDER (WITH ROTATION) ---
 if menu == "AI Commander":
     st.title("📟 TACTICAL BRAIN INTERFACE")
     if "messages" not in st.session_state:
@@ -63,17 +57,32 @@ if menu == "AI Commander":
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
 
-    # CHANGED PLACEHOLDER TEXT HERE
     if prompt := st.chat_input("Debam is awaiting your order..."):
         st.session_state.messages.append({"role": "user", "content": prompt})
         with st.chat_message("user"):
             st.markdown(prompt)
+            
         with st.chat_message("assistant"):
-            response = client.chat.completions.create(
-                model="llama-3.3-70b-versatile",
-                messages=[{"role": "system", "content": get_manual()}] + st.session_state.messages
-            )
-            full_response = response.choices[0].message.content
+            placeholder = st.empty()
+            full_response = ""
+            
+            # Initial Attempt
+            client = get_groq_client()
+            try:
+                response = client.chat.completions.create(
+                    model="llama-3.3-70b-versatile",
+                    messages=[{"role": "system", "content": get_manual()}] + st.session_state.messages
+                )
+                full_response = response.choices[0].message.content
+            except Exception:
+                # FAILOVER: If Key 1 hits a rate limit, pick a new key and try again instantly
+                client = get_groq_client()
+                response = client.chat.completions.create(
+                    model="llama-3.3-70b-versatile",
+                    messages=[{"role": "system", "content": get_manual()}] + st.session_state.messages
+                )
+                full_response = response.choices[0].message.content
+
             st.markdown(full_response)
             st.session_state.messages.append({"role": "assistant", "content": full_response})
 
@@ -102,10 +111,8 @@ elif menu == "Exploit Lab (CVE)":
 elif menu == "Brute Force Simulator":
     st.title("🔑 AUTHENTICATION TESTER")
     if st.button("Start Sim"):
-        # Fixed the function call to prevent AttributeError
         try:
-            result = bayo_brute.run_sim()
-            st.success(result)
+            st.success(bayo_brute.run_sim())
         except Exception as e:
             st.error(f"Module Error: {e}")
 
