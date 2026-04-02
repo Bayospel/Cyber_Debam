@@ -4,21 +4,32 @@ def load_knowledge():
     knowledge_base = ""
     brain_dir = "brain"
 
+    # Check if directory exists
     if not os.path.exists(brain_dir):
-        return "The brain folder is empty, Boss."
+        return "System Warning: 'brain' folder not found on server."
 
-    files = [f for f in os.listdir(brain_dir) if f.endswith('.txt')]
+    # Get all .txt files
+    try:
+        files = [f for f in os.listdir(brain_dir) if f.endswith('.txt')]
+    except Exception as e:
+        return f"Error accessing brain: {e}"
 
     if not files:
-        return "No text manuals found in the brain folder."
+        return "No tactical manuals detected in the brain folder."
 
+    # Read files and combine
     for filename in files:
-        with open(os.path.join(brain_dir, filename), 'r') as f:
-            knowledge_base += f"\n--- INFO FROM {filename} ---\n"
-            knowledge_base += f.read()
+        try:
+            with open(os.path.join(brain_dir, filename), 'r', encoding='utf-8') as f:
+                knowledge_base += f"\n[ SOURCE: {filename} ]\n"
+                # We read only first 5000 chars per file to prevent memory overflow
+                knowledge_base += f.read(5000) 
+        except:
+            continue
 
     return knowledge_base
 
 def get_context_prompt():
     data = load_knowledge()
-    return f"Use this private data to answer: {data[:2000]}" # Limit to 2000 chars for speed
+    # We pass this to Groq to give it "Private Context"
+    return f"\n--- PRIVATE KNOWLEDGE BASE ---\n{data[:3000]}\n--- END OF PRIVATE DATA ---"
