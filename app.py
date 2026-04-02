@@ -1,6 +1,7 @@
 import streamlit as st
 import os
 import random
+import time # Added for the welcome screen delay
 from groq import Groq
 import bayo_track
 import bayo_recon
@@ -11,6 +12,62 @@ import streamlit.components.v1 as components
 
 # --- TACTICAL UI SETUP ---
 st.set_page_config(page_title="BAYOSPEL GLOBAL OS", layout="wide")
+
+# --- WELCOME SPLASH SCREEN ENGINE ---
+if "walkthrough_done" not in st.session_state:
+    placeholder = st.empty()
+    with placeholder.container():
+        st.markdown(
+            """
+            <style>
+                .welcome-container {
+                    background-color: #050505;
+                    height: 100vh;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    text-align: center;
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    z-index: 9999;
+                }
+                .welcome-text {
+                    color: #00FF41;
+                    font-family: 'Courier New', monospace;
+                    font-size: 24px;
+                    margin-top: 20px;
+                    font-weight: bold;
+                }
+                .boss-text {
+                    color: white;
+                    font-size: 18px;
+                    letter-spacing: 2px;
+                }
+                @keyframes pulse {
+                    0% { opacity: 0.5; }
+                    50% { opacity: 1; }
+                    100% { opacity: 0.5; }
+                }
+                .glow-img {
+                    animation: pulse 2s infinite;
+                    border-radius: 50%;
+                    box-shadow: 0 0 20px #00FF41;
+                }
+            </style>
+            <div class="welcome-container">
+                <img src="https://raw.githubusercontent.com/Bayospel/cyber_debam/main/logo.png" width="200" class="glow-img">
+                <div class="welcome-text">WELCOME TO DEBAM AI</div>
+                <div class="boss-text">CREATED BY THE BIG BOSS BAYONLE</div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+        time.sleep(4) # Shows for 4 seconds
+    st.session_state.walkthrough_done = True
+    placeholder.empty()
 
 # --- PWA INSTALLATION ENGINE (FORCE DEBAM OVERRIDE) ---
 components.html(
@@ -39,13 +96,22 @@ components.html(
 )
 
 
-# THE ULTIMATE VISIBILITY FIX (CSS)
+# THE ULTIMATE VISIBILITY FIX (CSS + CHAT BACKGROUND LOGO)
 st.markdown("""
 <style>
-    .stApp { background-color: #050505; color: #00FF41; font-family: 'Courier New', monospace; }
+    .stApp { 
+        background-color: #050505; 
+        color: #00FF41; 
+        font-family: 'Courier New', monospace; 
+        background-image: linear-gradient(rgba(5, 5, 5, 0.85), rgba(5, 5, 5, 0.85)), url("https://raw.githubusercontent.com/Bayospel/cyber_debam/main/logo.png");
+        background-repeat: no-repeat;
+        background-position: center;
+        background-attachment: fixed;
+        background-size: 40%; /* Adjust transparency via the linear-gradient above */
+    }
     [data-testid="stSidebar"] { background-color: #0a0a0a; border-right: 1px solid #00FF41; }
     [data-testid="stSidebar"] p, [data-testid="stSidebar"] label { color: #FFFFFF !important; }
-    .stChatMessage { background-color: #1a1a1a !important; border: 1px solid #333; border-radius: 10px; padding: 10px; }
+    .stChatMessage { background-color: #1a1a1a !important; border: 1px solid #333; border-radius: 10px; padding: 10px; opacity: 0.95; }
     .stChatMessage p, .stChatMessage li, .stChatMessage span { color: #FFFFFF !important; font-size: 1.1rem !important; }
     .stChatMessage strong { color: #00FF41 !important; }
     .stChatInput textarea { color: #00FF41 !important; }
@@ -71,8 +137,9 @@ def get_manual():
     except:
         return "You are Debam (Bayospel), a tactical AI created by Bayonle. Use Naija slang."
 
-# --- SIDEBAR ---
-st.sidebar.title("💀 BAYOSPEL OS v4.0")
+# --- SIDEBAR (LOGO ADDED HERE) ---
+st.sidebar.image("https://raw.githubusercontent.com/Bayospel/cyber_debam/main/logo.png", use_container_width=True)
+st.sidebar.title("💀 DEBAM OS v4.0")
 st.sidebar.markdown(f"<span style='color:#00FF41'>Commander:</span> <span style='color:white'>Bayonle</span>", unsafe_allow_html=True)
 
 # SQUAD SELECTION (Updated with Network Eye)
