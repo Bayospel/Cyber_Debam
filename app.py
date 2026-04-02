@@ -6,9 +6,30 @@ import bayo_track
 import bayo_recon
 import bayo_exploit
 import bayo_brute
+import bayo_shodan  # Ensure bayo_shodan.py is in your repo
+import streamlit.components.v1 as components
 
 # --- TACTICAL UI SETUP ---
 st.set_page_config(page_title="BAYOSPEL GLOBAL OS", layout="wide")
+
+# --- PWA INSTALLATION ENGINE ---
+# Injects the manifest, apple icon, and service worker registration
+components.html(
+    """
+    <link rel="manifest" href="https://raw.githubusercontent.com/Bayospel/cyber_debam/main/manifest.json">
+    <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/Bayospel/cyber_debam/main/logo.png">
+    <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function() {
+        navigator.serviceWorker.register('https://raw.githubusercontent.com/Bayospel/cyber_debam/main/service-worker.js')
+        .then(function(reg) { console.log('ServiceWorker Ready'); })
+        .catch(function(err) { console.log('ServiceWorker Error', err); });
+      });
+    }
+    </script>
+    """,
+    height=0,
+)
 
 # THE ULTIMATE VISIBILITY FIX (CSS)
 st.markdown("""
@@ -45,7 +66,22 @@ def get_manual():
 # --- SIDEBAR ---
 st.sidebar.title("💀 BAYOSPEL OS v4.0")
 st.sidebar.markdown(f"<span style='color:#00FF41'>Commander:</span> <span style='color:white'>Bayonle</span>", unsafe_allow_html=True)
-menu = st.sidebar.radio("SQUAD SELECTION", ["AI Commander", "Web Recon (Scanner)", "Target Tracker (OSINT)", "Exploit Lab (CVE)", "Brute Force Simulator"])
+
+# SQUAD SELECTION (Updated with Network Eye)
+menu = st.sidebar.radio("SQUAD SELECTION", [
+    "AI Commander", 
+    "Web Recon (Scanner)", 
+    "Network Eye (Shodan)", 
+    "Target Tracker (OSINT)", 
+    "Exploit Lab (CVE)", 
+    "Brute Force Simulator"
+])
+
+# INSTALL BUTTON SECTION
+st.sidebar.markdown("---")
+st.sidebar.subheader("📱 MOBILE INSTALL")
+if st.sidebar.button("Install Tactical App"):
+    st.sidebar.info("Tap the browser menu (3 dots or Share icon) and select 'Add to Home Screen' to install the skull icon.")
 
 # --- MODULE 1: AI COMMANDER (WITH ROTATION) ---
 if menu == "AI Commander":
@@ -93,21 +129,34 @@ elif menu == "Web Recon (Scanner)":
     if st.button("Start Scan"):
         st.code(bayo_recon.full_recon(target) if target else "Need a target, Boss.")
 
-# --- MODULE 3: TRACKER ---
+# --- MODULE 3: NETWORK EYE (SHODAN) ---
+elif menu == "Network Eye (Shodan)":
+    st.title("👁️ NETWORK EYE: IP ENRICHMENT")
+    st.write("Detect open ports and vulnerabilities instantly via Shodan.")
+    ip_input = st.text_input("Enter Target IP Address:")
+    if st.button("Run Instant Scan"):
+        if ip_input:
+            with st.spinner("Querying Shodan Global Database..."):
+                result = bayo_shodan.quick_scan(ip_input)
+                st.info(result)
+        else:
+            st.warning("Commander, I need an IP address to scan!")
+
+# --- MODULE 4: TRACKER ---
 elif menu == "Target Tracker (OSINT)":
     st.title("📍 GLOBAL TARGET TRACKER")
     phone = st.text_input("Enter Phone Number:")
     if st.button("Deep Trace"):
         st.write(bayo_track.track_number(phone) if phone else "Need a number.")
 
-# --- MODULE 4: EXPLOIT ---
+# --- MODULE 5: EXPLOIT ---
 elif menu == "Exploit Lab (CVE)":
     st.title("💉 EXPLOIT & VULN LAB")
     cve = st.text_input("Enter CVE ID:")
     if st.button("Fetch Data"):
         st.info(bayo_exploit.get_exploit_info(cve))
 
-# --- MODULE 5: BRUTE FORCE ---
+# --- MODULE 6: BRUTE FORCE ---
 elif menu == "Brute Force Simulator":
     st.title("🔑 AUTHENTICATION TESTER")
     if st.button("Start Sim"):
