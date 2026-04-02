@@ -15,23 +15,23 @@ st.markdown("""
     /* Main Background */
     .stApp { background-color: #050505; color: #00FF41; font-family: 'Courier New', monospace; }
     
-    /* Sidebar */
+    /* Sidebar Text Visibility */
     [data-testid="stSidebar"] { background-color: #0a0a0a; border-right: 1px solid #00FF41; }
-    
-    /* CHAT BUBBLE FIX - TARGETS EVERYTHING INSIDE */
+    [data-testid="stSidebar"] .stText, [data-testid="stSidebar"] p, [data-testid="stSidebar"] label { 
+        color: #FFFFFF !important; 
+    }
+    [data-testid="stSidebar"] .st-emotion-cache-167880x { color: #00FF41 !important; }
+
+    /* CHAT BUBBLE FIX */
     .stChatMessage { background-color: #1a1a1a !important; border: 1px solid #333; border-radius: 10px; padding: 10px; }
-    
-    /* Force ALL text inside chat (paragraphs, lists, bold) to be WHITE */
-    .stChatMessage p, .stChatMessage li, .stChatMessage span, .stChatMessage div { 
+    .stChatMessage p, .stChatMessage li, .stChatMessage span { 
         color: #FFFFFF !important; 
         font-size: 1.1rem !important;
     }
-    
-    /* Make Bold text glow a bit green */
-    .stChatMessage strong { color: #00FF41 !important; font-weight: bold; }
+    .stChatMessage strong { color: #00FF41 !important; }
 
-    /* Input Box */
-    .stTextInput>div>div>input { background-color: #111; color: #00FF41; border: 1px solid #00FF41; }
+    /* Input Box Placeholder & Text */
+    .stChatInput textarea { color: #00FF41 !important; }
     
     /* Buttons */
     .stButton>button { background-color: #00FF41; color: black; font-weight: bold; width: 100%; }
@@ -50,7 +50,7 @@ def get_manual():
 
 # --- SIDEBAR ---
 st.sidebar.title("💀 BAYOSPEL OS v4.0")
-st.sidebar.write("Commander: **Bayonle**")
+st.sidebar.markdown(f"<span style='color:#00FF41'>Commander:</span> <span style='color:white'>Bayonle</span>", unsafe_allow_html=True)
 menu = st.sidebar.radio("SQUAD SELECTION", ["AI Commander", "Web Recon (Scanner)", "Target Tracker (OSINT)", "Exploit Lab (CVE)", "Brute Force Simulator"])
 
 # --- MODULE 1: AI COMMANDER ---
@@ -63,7 +63,8 @@ if menu == "AI Commander":
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
 
-    if prompt := st.chat_input("Commander, awaiting orders..."):
+    # CHANGED PLACEHOLDER TEXT HERE
+    if prompt := st.chat_input("Debam is awaiting your order..."):
         st.session_state.messages.append({"role": "user", "content": prompt})
         with st.chat_message("user"):
             st.markdown(prompt)
@@ -97,11 +98,16 @@ elif menu == "Exploit Lab (CVE)":
     if st.button("Fetch Data"):
         st.info(bayo_exploit.get_exploit_info(cve))
 
-# --- MODULE 5: BRUTE ---
+# --- MODULE 5: BRUTE FORCE ---
 elif menu == "Brute Force Simulator":
     st.title("🔑 AUTHENTICATION TESTER")
     if st.button("Start Sim"):
-        st.success(bayo_brute.run_sim())
+        # Fixed the function call to prevent AttributeError
+        try:
+            result = bayo_brute.run_sim()
+            st.success(result)
+        except Exception as e:
+            st.error(f"Module Error: {e}")
 
 st.sidebar.markdown("---")
 st.sidebar.write("📡 Status: **ONLINE**")
