@@ -32,7 +32,7 @@ components.html(
     </script>
     
     <!-- 3. Direct Link to your custom Manifest -->
-    <link rel="manifest" href="https://raw.githubusercontent.com/Bayospel/cyber_debam/main/manifest.json">
+    <link rel="manifest" href="https://raw.githack.com/Bayospel/cyber_debam/main/manifest.json?v=2">
     <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/Bayospel/cyber_debam/main/logo.png">
     """,
     height=0,
