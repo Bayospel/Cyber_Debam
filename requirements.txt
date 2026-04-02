@@ -1,0 +1,7 @@
+streamlit
+groq
+requests
+phonenumbers
+opencage
+beautifulsoup4
+nvdlib
