@@ -12,24 +12,32 @@ import streamlit.components.v1 as components
 # --- TACTICAL UI SETUP ---
 st.set_page_config(page_title="BAYOSPEL GLOBAL OS", layout="wide")
 
-# --- PWA INSTALLATION ENGINE ---
-# Injects the manifest, apple icon, and service worker registration
+# --- PWA INSTALLATION ENGINE (FORCE DEBAM OVERRIDE) ---
 components.html(
     """
-    <link rel="manifest" href="https://raw.githubusercontent.com/Bayospel/cyber_debam/main/manifest.json">
-    <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/Bayospel/cyber_debam/main/logo.png">
     <script>
+    // 1. Force remove any existing service workers from Streamlit
+    navigator.serviceWorker.getRegistrations().then(function(registrations) {
+        for(let registration of registrations) {
+            registration.unregister();
+        }
+    });
+
+    // 2. Register YOUR specific Debam Service Worker
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', function() {
-        navigator.serviceWorker.register('https://raw.githubusercontent.com/Bayospel/cyber_debam/main/service-worker.js')
-        .then(function(reg) { console.log('ServiceWorker Ready'); })
-        .catch(function(err) { console.log('ServiceWorker Error', err); });
+        navigator.serviceWorker.register('https://raw.githubusercontent.com/Bayospel/cyber_debam/main/service-worker.js');
       });
     }
     </script>
+    
+    <!-- 3. Direct Link to your custom Manifest -->
+    <link rel="manifest" href="https://raw.githubusercontent.com/Bayospel/cyber_debam/main/manifest.json">
+    <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/Bayospel/cyber_debam/main/logo.png">
     """,
     height=0,
 )
+
 
 # THE ULTIMATE VISIBILITY FIX (CSS)
 st.markdown("""
