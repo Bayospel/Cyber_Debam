@@ -1,39 +1,109 @@
 import streamlit as st
-import os
 from groq import Groq
+import os, requests, subprocess, datetime
+
+# --- IMPORT ALL TACTICAL MODULES ---
 import bayo_track
 import bayo_recon
+import bayo_reader
 import bayo_exploit
 import bayo_brute
 
 # --- TACTICAL UI SETUP ---
-st.set_page_config(page_title="BAYOSPEL GLOBAL OS", layout="wide")
+st.set_page_config(page_title="BAYOSPEL GLOBAL CLOUD", layout="wide", page_icon="💀")
 
-# CUSTOM CSS FOR HACKER THEME & TEXT VISIBILITY
 st.markdown("""
-<style>
-    /* Main App Background */
+    <style>
     .stApp { background-color: #050505; color: #00FF41; font-family: 'Courier New', monospace; }
-    
-    /* Sidebar Styling */
-    [data-testid="stSidebar"] { background-color: #0a0a0a; border-right: 1px solid #00FF41; }
-    
-    /* FIX: Force Chat Message Text to be WHITE and Readable */
-    .stChatMessage { background-color: #1a1a1a !important; border: 1px solid #333; margin-bottom: 10px; border-radius: 10px; }
-    .stChatMessage p { color: #FFFFFF !important; font-size: 1.1rem; font-weight: 500; }
-    
-    /* Input Boxes */
     .stTextInput>div>div>input { background-color: #111; color: #00FF41; border: 1px solid #00FF41; }
+    .stButton>button { background-color: #00FF41; color: black; font-weight: bold; border-radius: 0px; }
+    [data-testid="stSidebar"] { background-color: #0a0a0a; border-right: 1px solid #00FF41; }
+    </style>
+    """, unsafe_allow_html=True)
+
+client = Groq(api_key=st.secrets["GROQ_API_KEY"])
+
+# --- SIDEBAR COMMAND CENTER ---
+st.sidebar.title("💀 BAYOSPEL OS v4.0")
+menu = st.sidebar.radio("SQUAD SELECTION", [
+    "AI Commander", 
+    "Web Recon (Scanner)", 
+    "Target Tracker (OSINT)", 
+    "Exploit Lab (CVE)", 
+    "Brute Analyzer (Sniffer)"
+])
+
+# --- 1. AI COMMANDER (Integrated with Brain) ---
+if menu == "AI Commander":
+    st.title("📟 TACTICAL BRAIN INTERFACE")
     
-    /* Buttons */
-    .stButton>button { background-color: #00FF41; color: black; font-weight: bold; width: 100%; border-radius: 5px; }
-    .stButton>button:hover { background-color: #008F11; color: white; }
+    if "messages" not in st.session_state:
+        st.session_state.messages = []
 
-    /* Titles */
-    h1, h2, h3 { color: #00FF41 !important; }
-</style>
-""", unsafe_allow_html=True)
+    for m in st.session_state.messages:
+        with st.chat_message(m["role"]): st.markdown(m["content"])
 
+    if prompt := st.chat_input("Commander, awaiting orders..."):
+        st.chat_message("user").markdown(prompt)
+        st.session_state.messages.append({"role": "user", "content": prompt})
+        
+        # Pull private context from bayo_reader
+        brain_data = bayo_reader.get_context_prompt()
+
+        with st.chat_message("assistant"):
+            res = client.chat.completions.create(
+                model="llama-3.3-70b-versatile",
+                messages=[
+                    {"role": "system", "content": f"You are Bayospel Cloud AI. Use Naija slang. {brain_data}"}
+                ] + st.session_state.messages
+            )
+            reply = res.choices[0].message.content
+            st.markdown(reply)
+            st.session_state.messages.append({"role": "assistant", "content": reply})
+
+# --- 2. WEB RECON (bayo_recon) ---
+elif menu == "Web Recon (Scanner)":
+    st.title("📡 GLOBAL RECONNAISSANCE")
+    target = st.text_input("Enter Target URL:")
+    if st.button("Initialize Full Recon"):
+        if target:
+            with st.spinner("Probing target..."):
+                report = bayo_recon.full_recon(target)
+                st.code(report)
+        else: st.error("Target missing, Boss.")
+
+# --- 3. TARGET TRACKER (bayo_track) ---
+elif menu == "Target Tracker (OSINT)":
+    st.title("📍 GEOSPATIAL TRACKING")
+    val = st.text_input("Enter Number (+234...) or IP:")
+    if st.button("Deep Trace"):
+        with st.spinner("Scanning satellite data..."):
+            success, report, lat, lng = bayo_track.track_number(val)
+            if success:
+                st.success("Target Pinpointed!")
+                st.markdown(report)
+                if lat != 0:
+                    st.map(data={"lat": [lat], "lon": [lng]})
+            else:
+                st.error(report)
+
+# --- 4. EXPLOIT LAB (bayo_exploit) ---
+elif menu == "Exploit Lab (CVE)":
+    st.title("🔬 VULNERABILITY RESEARCH")
+    query = st.text_input("Software/Service Name (e.g. Apache):")
+    if st.button("Fetch NIST CVEs"):
+        with st.spinner("Querying NIST Database..."):
+            results = bayo_exploit.search_cve(query)
+            st.markdown(results)
+
+# --- 5. BRUTE ANALYZER (bayo_brute) ---
+elif menu == "Brute Analyzer (Sniffer)":
+    st.title("💀 FORM SNIFFER & ANALYZER")
+    login_url = st.text_input("Enter Login Page URL:")
+    if st.button("Sniff Form Parameters"):
+        with st.spinner("Analyzing HTML structure..."):
+            analysis = bayo_brute.analyze_target(login_url)
+            st.code(analysis)
 # --- CORE ENGINE ---
 # This pulls the key you saved in Streamlit Settings > Secrets
 client = Groq(api_key=st.secrets["GROQ_API_KEY"])
