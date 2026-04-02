@@ -13,8 +13,9 @@ import bayo_brute
 st.set_page_config(page_title="BAYOSPEL GLOBAL CLOUD", layout="wide", page_icon="💀")
 
 st.markdown("""
-    <stylest.markdown("""
     <style>
+    /* Main App Background */
+
     /* Main App Background */
     .stApp { background-color: #050505; color: #00FF41; font-family: 'Courier New', monospace; }
     
@@ -43,7 +44,29 @@ client = Groq(api_key=st.secrets["GROQ_API_KEY"])
 st.sidebar.title("💀 BAYOSPEL OS v4.0")
 menu = st.sidebar.radio("SQUAD SELECTION", [
     "AI Commander", 
-    "Web Recon (Scanner)", 
+    "Web Recon (Scannest.markdown("""
+    <style>
+    /* Main App Background */
+    .stApp { background-color: #050505; color: #00FF41; font-family: 'Courier New', monospace; }
+    
+    /* Input Boxes */
+    .stTextInput>div>div>input { background-color: #111; color: #00FF41; border: 1px solid #00FF41; }
+    
+    /* Buttons */
+    .stButton>button { background-color: #00FF41; color: black; font-weight: bold; border-radius: 0px; }
+    
+    /* Sidebar */
+    [data-testid="stSidebar"] { background-color: #0a0a0a; border-right: 1px solid #00FF41; }
+
+    /* FIX: Force Chat Message Text Visibility */
+    .stChatMessage { background-color: #1a1a1a !important; border: 1px solid #333; margin-bottom: 10px; border-radius: 10px; }
+    .stChatMessage p { color: #FFFFFF !important; font-size: 1.1rem; }
+    
+    /* Chat Input Bar at bottom */
+    .stChatInputContainer { background-color: #050505 !important; }
+    </style>
+    """, unsafe_allow_html=True)
+r)", 
     "Target Tracker (OSINT)", 
     "Exploit Lab (CVE)", 
     "Brute Analyzer (Sniffer)"
