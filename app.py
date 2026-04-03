@@ -447,5 +447,6 @@ elif menu == "Phish-Check (URL Analyzer)":
 
 # --- 10. FOOTER STATUS ---
 st.sidebar.markdown("---")
-st.sidebar.write("📡 Status: **ONLINE**")
+st.sidebar.warning("⚠️ **LEGAL NOTICE:**\nThis system is for **Educational Purposes Only**. Unauthorized testing is prohibited, I will not be responsible for any illegal actions.")
+st.sidebar.write("📡 Status: ** DEBAM ONLINE**")
 st.sidebar.write("⚡ Power: **ULTRA v5.2**")
