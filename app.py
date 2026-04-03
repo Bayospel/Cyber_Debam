@@ -25,62 +25,53 @@ except Exception as e:
     st.error("CRITICAL: Supabase Secrets missing. Check your Dashboard!")
     st.stop()
 
-# --- 3. THE GATEKEEPER & AUTH SYSTEM (FIXED WELCOME SCREEN) ---
+# --- 3. THE GATEKEEPER & AUTH SYSTEM (FIXED FOR MOBILE) ---
 if "access_granted" not in st.session_state:
     st.session_state.access_granted = False
 
 if not st.session_state.access_granted:
+    # This CSS makes the background stay fixed and the content scrollable
     st.markdown(
         f"""
         <style>
             .gatekeeper-container {{
                 background-color: #050505;
-                height: 100vh;
+                min-height: 100vh;
                 display: flex;
                 flex-direction: column;
                 align-items: center;
-                justify-content: center;
                 text-align: center;
-                position: fixed;
-                top: 0; left: 0; width: 100%;
-                z-index: 99999;
                 font-family: 'Courier New', monospace;
+                padding-top: 50px;
             }}
             .welcome-text {{
                 color: #00FF41;
-                font-size: 35px;
+                font-size: 24px;
                 font-weight: bold;
-                margin-top: 20px;
                 text-transform: uppercase;
-                letter-spacing: 5px;
-                text-shadow: 0 0 20px #00FF41;
+                letter-spacing: 3px;
+                text-shadow: 0 0 15px #00FF41;
+                margin: 20px 0;
             }}
             .boss-text {{
                 color: white;
-                font-size: 18px;
-                margin-top: 10px;
-                letter-spacing: 8px;
+                font-size: 14px;
+                letter-spacing: 4px;
                 opacity: 0.8;
-                margin-bottom: 20px;
+                margin-bottom: 30px;
             }}
             .glow-img {{
                 border-radius: 50%;
-                box-shadow: 0 0 60px #00FF41;
-                animation: pulse 2s infinite;
+                box-shadow: 0 0 40px #00FF41;
+                width: 180px;
             }}
-            @keyframes pulse {{
-                0% {{ transform: scale(1); opacity: 0.8; }}
-                50% {{ transform: scale(1.05); opacity: 1; }}
-                100% {{ transform: scale(1); opacity: 0.8; }}
-            }}
-            /* Tab Styling for Auth */
-            .stTabs [data-baseweb="tab-list"] {{ gap: 30px; justify-content: center; }}
+            /* Clean Tab Styling */
+            .stTabs [data-baseweb="tab-list"] {{ gap: 10px; justify-content: center; }}
             .stTabs [data-baseweb="tab"] {{
                 background-color: transparent;
-                border: 1px solid #00FF41;
+                border: 1px solid #333;
                 color: #00FF41 !important;
-                padding: 10px 30px;
-                border-radius: 5px;
+                padding: 8px 15px;
             }}
             .stTabs [aria-selected="true"] {{
                 background-color: #00FF41 !important;
@@ -89,68 +80,43 @@ if not st.session_state.access_granted:
             #MainMenu, footer, header {{ visibility: hidden; }}
         </style>
         <div class="gatekeeper-container">
-            <img src="{logo_data.LOGO_BASE64}" width="250" class="glow-img">
-            <div class="welcome-text">WELCOME TO DEBAM AI OS</div>
-            <div class="boss-text">CREATED BY THE BIG BOSS BAYONLE</div>
+            <img src="{logo_data.LOGO_BASE64}" class="glow-img">
+            <div class="welcome-text">DEBAM AI OS v4.9</div>
+            <div class="boss-text">BOSS BAYONLE EDITION</div>
         </div>
         """,
         unsafe_allow_html=True
     )
     
-    # Position the Auth UI correctly
-    st.write("<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>", unsafe_allow_html=True)
-    
-    _, auth_col, _ = st.columns([1, 1.8, 1])
-    
-    with auth_col:
-        auth_tab, reg_tab, reset_tab = st.tabs(["🔑 LOGIN", "📝 SIGN UP", "🛰️ RECOVERY"])
-        
-        with auth_tab:
-            email_input = st.text_input("EMAIL", placeholder="commander@bayospel.os")
-            pass_input = st.text_input("PASSWORD", type="password")
-            if st.button("INITIALIZE SYSTEM ACCESS", use_container_width=True):
-                try:
-                    res = supabase.auth.sign_in_with_password({"email": email_input, "password": pass_input})
-                    st.success("ACCESS GRANTED. SYNCING...")
-                    st.session_state.access_granted = True
-                    time.sleep(1)
-                    st.rerun()
-                except Exception:
-                    st.error("INVALID CREDENTIALS. ACCESS DENIED.")
-
-        with reg_tab:
-            st.markdown("<h4 style='color:white; text-align:center;'>NEW COMMANDER REGISTRATION</h4>", unsafe_allow_html=True)
-            new_name = st.text_input("CHOOSE USERNAME")
-            new_email = st.text_input("OPERATIONAL EMAIL")
-            new_phone = st.text_input("PHONE (WITH COUNTRY CODE)")
-            new_pass = st.text_input("CREATE ACCESS PASSCODE", type="password")
+    # Using a container to keep the login box visible on small screens
+    auth_container = st.container()
+    with auth_container:
+        _, auth_col, _ = st.columns([0.1, 0.8, 0.1])
+        with auth_col:
+            auth_tab, reg_tab = st.tabs(["🔑 LOGIN", "📝 JOIN"])
             
-            if st.button("EXECUTE REGISTRATION", use_container_width=True):
-                try:
-                    res = supabase.auth.sign_up({
-                        "email": new_email,
-                        "password": new_pass,
-                        "options": {
-                            "data": {
-                                "full_name": new_name,
-                                "phone_number": new_phone
-                            }
-                        }
-                    })
-                    st.info("Verification sent! Confirm your email to log in.")
-                except Exception as e:
-                    st.error(f"REGISTRATION FAILED: {e}")
+            with auth_tab:
+                email_input = st.text_input("EMAIL", key="log_email")
+                pass_input = st.text_input("PASSWORD", type="password", key="log_pass")
+                if st.button("CONTINUE TO SYSTEM", use_container_width=True):
+                    try:
+                        res = supabase.auth.sign_in_with_password({"email": email_input, "password": pass_input})
+                        st.session_state.access_granted = True
+                        st.rerun()
+                    except:
+                        st.error("ACCESS DENIED")
 
-        with reset_tab:
-            st.markdown("<p style='color:gray;'>Enter email to receive a secure recovery link.</p>", unsafe_allow_html=True)
-            r_email = st.text_input("RECOVERY EMAIL")
-            if st.button("SEND RECOVERY SIGNAL", use_container_width=True):
-                try:
-                    supabase.auth.reset_password_for_email(r_email)
-                    st.success("Check your inbox for reset instructions.")
-                except:
-                    st.error("System failed to find email.")
+            with reg_tab:
+                new_email = st.text_input("EMAIL", key="reg_email")
+                new_pass = st.text_input("PASSCODE", type="password", key="reg_pass")
+                if st.button("CREATE ACCOUNT", use_container_width=True):
+                    try:
+                        supabase.auth.sign_up({"email": new_email, "password": new_pass})
+                        st.info("Check Email to Verify!")
+                    except:
+                        st.error("FAILED")
     st.stop()
+
 
 # --- 4. PWA INSTALLATION ENGINE ---
 components.html(
