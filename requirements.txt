@@ -5,3 +5,4 @@ phonenumbers
 opencage
 beautifulsoup4
 nvdlib
+supabase
