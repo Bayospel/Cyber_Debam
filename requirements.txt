@@ -6,3 +6,5 @@ opencage
 beautifulsoup4
 nvdlib
 supabase
+Pillow
+dnspython
