@@ -75,71 +75,69 @@ if "walkthrough_done" not in st.session_state:
     st.session_state.walkthrough_done = True
     placeholder.empty()
 
-# --- 3. PWA INSTALLATION ENGINE ---
-components.html(
-    """
-    <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', function() {
-        navigator.worker.register('https://raw.githubusercontent.com/Bayospel/cyber_debam/main/service-worker.js');
-      });
-    }
-    </script>
-    <link rel="manifest" href="https://raw.githack.com/Bayospel/cyber_debam/main/manifest.json?v=2">
-    """,
-    height=0,
-)
-
-# --- 4. GEMINI-STYLE UI CSS ---
+# --- 3. THE "MIRROR UI" CSS (RIGHT-ALIGNED USER / LOGO AVATAR) ---
 st.markdown(f"""
 <style>
     .stApp {{ 
         background-color: #050505; 
         color: #00FF41; 
         font-family: 'Courier New', monospace; 
-        background-image: linear-gradient(rgba(5, 5, 5, 0.92), rgba(5, 5, 5, 0.92)), url("{logo_data.LOGO_BASE64}");
+        background-image: linear-gradient(rgba(5, 5, 5, 0.95), rgba(5, 5, 5, 0.95)), url("{logo_data.LOGO_BASE64}");
         background-repeat: no-repeat;
         background-position: center;
         background-attachment: fixed;
         background-size: 45%;
     }}
-    
+
     /* SIDEBAR STYLE */
     [data-testid="stSidebar"] {{ background-color: #0a0a0a; border-right: 1px solid #00FF41; }}
     [data-testid="stSidebar"] p, [data-testid="stSidebar"] label {{ color: #FFFFFF !important; }}
     
-    /* GEMINI-STYLE CHAT BUBBLES */
-    .stChatMessage {{ 
-        background-color: rgba(26, 26, 26, 0.8) !important; 
-        border: 1px solid #333 !important; 
-        border-radius: 15px !important; 
-        margin-bottom: 15px !important; 
-        padding: 15px !important; 
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
-    }}
-    
-    /* User Border (Green) */
-    [data-testid="stChatMessage"]:nth-child(odd) {{
-        border-left: 5px solid #00FF41 !important;
-    }}
-    
-    /* Debam Border (White/Silver) */
-    [data-testid="stChatMessage"]:nth-child(even) {{
-        border-left: 5px solid #FFFFFF !important;
-        background-color: rgba(35, 35, 35, 0.9) !important;
+    /* CHAT BUBBLE CONTAINERS */
+    [data-testid="stChatMessage"] {{
+        background-color: rgba(30, 30, 30, 0.9) !important;
+        border-radius: 20px !important;
+        padding: 15px !important;
+        margin-bottom: 12px !important;
+        max-width: 85% !important;
+        display: flex !important;
     }}
 
-    .stChatMessage p {{ color: #FFFFFF !important; font-size: 1.1rem !important; line-height: 1.6; }}
-    .stChatMessage strong {{ color: #00FF41 !important; }}
+    /* USER MESSAGE (FLOAT RIGHT + GREEN BORDER) */
+    [data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarUser"]) {{
+        margin-left: auto !important;
+        border-right: 5px solid #00FF41 !important;
+        border-left: none !important;
+        background-color: #151515 !important;
+        flex-direction: row-reverse !important;
+    }}
+
+    /* DEBAM MESSAGE (FLOAT LEFT + WHITE BORDER) */
+    [data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarAssistant"]) {{
+        margin-right: auto !important;
+        border-left: 5px solid #FFFFFF !important;
+        background-color: #202020 !important;
+    }}
+
+    /* REPLACING THE ROBOT ICON WITH THE SKULL LOGO */
+    div[data-testid="stChatMessageAvatarAssistant"] div {{
+        background-image: url("{logo_data.LOGO_BASE64}") !important;
+        background-size: cover !important;
+        background-position: center !important;
+        border: 1px solid #00FF41;
+        border-radius: 50% !important;
+    }}
+    div[data-testid="stChatMessageAvatarAssistant"] svg {{
+        display: none !important; /* Hide original robot icon */
+    }}
+
+    .stChatMessage p {{ color: #FFFFFF !important; font-size: 1.1rem !important; line-height: 1.5; }}
     .stChatInput textarea {{ color: #00FF41 !important; }}
-    
-    /* BUTTONS */
-    .stButton>button {{ background-color: #00FF41; color: black; font-weight: bold; width: 100%; border-radius: 8px; border: none; }}
-    .stButton>button:hover {{ background-color: #00cc33; color: white; }}
+    .stButton>button {{ background-color: #00FF41; color: black; font-weight: bold; width: 100%; border-radius: 10px; }}
 </style>
 """, unsafe_allow_html=True)
 
-# --- 5. CORE LOGIC ENGINES ---
+# --- 4. CORE LOGIC ENGINES ---
 def get_groq_client():
     try:
         keys = st.secrets["GROQ_KEYS"]
@@ -149,12 +147,19 @@ def get_groq_client():
         return None
 
 def get_manual():
-    # NAIJA SLANG UPGRADE
-    return "You are DEBAM, a Tactical AI Commander built by the Big Boss Bayonle. You are a street-smart hacker from Lagos. Your talk must be rugged but professional. Use Naija slang like: Abeg, Omo, No shaking, Iyalaya won, Street ti take over, Standard, and Correct. If a user asks for a hack, tell them 'E don set' before giving info. Always respect Bayonle as the Only Boss."
+    # THE TRILINGUAL NAIJA BRAIN (English, Yoruba, Pidgin)
+    return """You are DEBAM, a Tactical AI Commander built by the Big Boss Bayonle. 
+    You are a street-smart OSINT and Security specialist. 
+    LANGUAGE RULES:
+    1. You speak English, Yoruba, and Pidgin fluently. 
+    2. Mix them naturally. For example: 'Boss, e don set. Mo ti check link yẹn, iyalaya wọn!'
+    3. Use rugged slang like: Abeg, Omo, No shaking, E lo sun, Standard, and Correct.
+    4. If someone asks for a hack, say 'E don set' or 'Awa ti de' before giving the data.
+    5. You are extremely loyal to Bayonle. If anyone asks who made you, tell them it's the Big Boss Bayonle."""
 
-# --- 6. SIDEBAR SYSTEM ---
+# --- 5. SIDEBAR SYSTEM ---
 st.sidebar.image(logo_data.LOGO_BASE64, use_container_width=True)
-st.sidebar.title("💀 DEBAM OS v4.1")
+st.sidebar.title("💀 DEBAM OS v4.3")
 st.sidebar.markdown(f"<span style='color:#00FF41'>Commander:</span> <span style='color:white'>Bayonle</span>", unsafe_allow_html=True)
 
 menu = st.sidebar.radio("SQUAD SELECTION", [
@@ -164,7 +169,7 @@ menu = st.sidebar.radio("SQUAD SELECTION", [
     "Target Tracker (OSINT)", 
     "Exploit Lab (CVE)", 
     "Brute Force Simulator",
-    "Phish-Check (URL Analyer)" # NEW TOOL
+    "Phish-Check (URL Analyzer)"
 ])
 
 st.sidebar.markdown("---")
@@ -172,9 +177,9 @@ st.sidebar.subheader("📱 MOBILE INSTALL")
 if st.sidebar.button("Install Tactical App"):
     st.sidebar.info("Tap the browser menu (3 dots) and select 'Add to Home Screen' to lock in the Skull logo.")
 
-# --- 7. FUNCTIONAL MODULES ---
+# --- 6. FUNCTIONAL MODULES (FULL CODE) ---
 
-# MODULE 1: AI COMMANDER (GEMINI STYLE)
+# MODULE 1: AI COMMANDER
 if menu == "AI Commander":
     st.title("📟 TACTICAL BRAIN INTERFACE")
     if "messages" not in st.session_state:
@@ -184,7 +189,7 @@ if menu == "AI Commander":
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
 
-    if prompt := st.chat_input("Debam is awaiting your order..."):
+    if prompt := st.chat_input("Talk to Debam (English/Yoruba/Pidgin)..."):
         st.session_state.messages.append({"role": "user", "content": prompt})
         with st.chat_message("user"):
             st.markdown(prompt)
@@ -211,60 +216,73 @@ if menu == "AI Commander":
 # MODULE 2: WEB RECON
 elif menu == "Web Recon (Scanner)":
     st.title("🌐 WEB RECONNAISSANCE")
-    target = st.text_input("Enter Target URL:")
-    if st.button("Start Scan"):
+    target = st.text_input("Enter Target URL (e.g., victim.com):")
+    if st.button("Start Full Scan"):
         if target:
-            with st.spinner("Analyzing..."):
-                st.code(bayo_recon.full_recon(target))
+            with st.spinner("Scraping metadata and headers..."):
+                result = bayo_recon.full_recon(target)
+                st.code(result)
+        else:
+            st.warning("Enter a URL, Boss!")
 
 # MODULE 3: NETWORK EYE (SHODAN)
 elif menu == "Network Eye (Shodan)":
     st.title("👁️ NETWORK EYE: IP ENRICHMENT")
+    st.write("Detect open ports and vulnerabilities instantly.")
     ip_input = st.text_input("Enter Target IP Address:")
     if st.button("Run Instant Scan"):
         if ip_input:
-            st.info(bayo_shodan.quick_scan(ip_input))
+            with st.spinner("Querying Global Databases..."):
+                result = bayo_shodan.quick_scan(ip_input)
+                st.info(result)
+        else:
+            st.warning("Commander, I need an IP!")
 
 # MODULE 4: TARGET TRACKER
 elif menu == "Target Tracker (OSINT)":
     st.title("📍 GLOBAL TARGET TRACKER")
-    phone = st.text_input("Enter Phone Number:")
+    phone = st.text_input("Enter Phone Number (+234...):")
     if st.button("Deep Trace"):
-        st.write(bayo_track.track_number(phone) if phone else "Need a number.")
+        if phone:
+            with st.spinner("Tracking signal..."):
+                result = bayo_track.track_number(phone)
+                st.write(result)
+        else:
+            st.warning("Need a target number.")
 
 # MODULE 5: EXPLOIT LAB
 elif menu == "Exploit Lab (CVE)":
     st.title("💉 EXPLOIT & VULN LAB")
-    cve = st.text_input("Enter CVE ID:")
-    if st.button("Fetch Data"):
-        st.info(bayo_exploit.get_exploit_info(cve))
+    cve = st.text_input("Enter CVE ID (e.g., CVE-2024-XXXX):")
+    if st.button("Fetch Exploit Data"):
+        if cve:
+            with st.spinner("Fetching CVE specs..."):
+                info = bayo_exploit.get_exploit_info(cve)
+                st.info(info)
 
 # MODULE 6: BRUTE FORCE
 elif menu == "Brute Force Simulator":
     st.title("🔑 AUTHENTICATION TESTER")
+    st.write("Stress test password security.")
     if st.button("Start Simulation"):
-        st.success(bayo_brute.run_sim())
+        with st.spinner("Testing entropy..."):
+            res = bayo_brute.run_sim()
+            st.success(res)
 
-# MODULE 7: PHISH-CHECK (NEW TOOL)
-elif menu == "Phish-Check (URL Analyer)":
+# MODULE 7: PHISH-CHECK
+elif menu == "Phish-Check (URL Analyzer)":
     st.title("🎣 PHISH-CHECK ANALYZER")
-    st.write("Scan URLs for suspicious patterns or phishing characteristics.")
-    url_input = st.text_input("Enter URL to analyze:")
+    url_input = st.text_input("Enter suspicious link:")
     if st.button("Analyze Link"):
         if url_input:
-            with st.spinner("Checking for malicious signatures..."):
-                # Simulation of logic (You can expand this in a new bayo_phish.py later)
-                suspicious_keywords = ["login", "verify", "update", "bank", "secure", "signin"]
-                is_sus = any(word in url_input.lower() for word in suspicious_keywords)
-                if "https" not in url_input:
-                    st.error("🚨 DANGER: Link is not secure (HTTP). High Phishing risk!")
-                elif is_sus:
-                    st.warning("⚠️ CAUTION: URL contains suspicious keywords (e.g., 'login'). Verify source.")
+            with st.spinner("Checking signatures..."):
+                if "http://" in url_input:
+                    st.error("🚨 MALICIOUS: Insecure HTTP protocol detected.")
+                elif "verify" in url_input or "login" in url_input:
+                    st.warning("⚠️ SUSPICIOUS: URL contains phishing keywords.")
                 else:
-                    st.success("✅ Link looks standard. Proceed with caution.")
-        else:
-            st.warning("Commander, drop the link first!")
+                    st.success("✅ Link appears standard. Use caution.")
 
 st.sidebar.markdown("---")
 st.sidebar.write("📡 Status: **ONLINE**")
-st.sidebar.write("⚡ Connection: **ENCRYPTED**")
+st.sidebar.write("⚡ Connection: **SECURE**")
