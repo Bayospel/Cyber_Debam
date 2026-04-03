@@ -16,7 +16,6 @@ import streamlit.components.v1 as components
 st.set_page_config(page_title="BAYOSPEL GLOBAL OS", layout="wide", initial_sidebar_state="expanded")
 
 # --- 2. THE SUPABASE ENGINE ---
-# Make sure these are in your Streamlit Secrets!
 try:
     SUPABASE_URL = st.secrets["SUPABASE_URL"]
     SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
@@ -29,6 +28,7 @@ except Exception as e:
 if "access_granted" not in st.session_state:
     st.session_state.access_granted = False
 
+# This block handles the login screen
 if not st.session_state.access_granted:
     st.markdown(
         f"""
@@ -95,9 +95,7 @@ if not st.session_state.access_granted:
             pwd = st.text_input("ACCESS PASSWORD", type="password", key="l_pwd")
             if st.button("INITIALIZE SESSION", use_container_width=True):
                 try:
-                    # Supabase Auth Call
                     res = supabase.auth.sign_in_with_password({"email": email, "password": pwd})
-                    st.success("AUTHENTICATED. WELCOME BOSS.")
                     st.session_state.access_granted = True
                     st.rerun()
                 except:
@@ -117,10 +115,12 @@ if not st.session_state.access_granted:
                         st.error(f"Error: {e}")
                 else:
                     st.warning("Passwords do not match!")
-st.stop()
-
+    
+    # INDENTED STOP: This only stops the script if NOT logged in.
+    st.stop()
 
 # --- 4. PWA INSTALLATION ENGINE ---
+# Everything from here down only runs if access_granted is True
 components.html(
     """
     <script>
@@ -309,7 +309,6 @@ elif menu == "Target Tracker (OSINT)":
         if phone:
             with st.spinner("Tracking signal markers..."):
                 try:
-                    # Added OpenCage/BayoTrack integration check
                     result = bayo_track.track_number(phone)
                     st.write(result)
                 except Exception as e:
