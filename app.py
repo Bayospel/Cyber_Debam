@@ -2,18 +2,27 @@ import streamlit as st
 import os
 import random
 import time
+import requests
+import dns.resolver
+import socket
+from PIL import Image
+from PIL.ExifTags import TAGS, GPSTAGS
 from groq import Groq
 from supabase import create_client, Client
 import bayo_track
 import bayo_recon
 import bayo_exploit
 import bayo_brute
-import bayo_shodan  # Ensure bayo_shodan.py is in your repo
-import logo_data    # This loads your 870KB logo instantly from your new file
+import bayo_shodan  
+import logo_data    
 import streamlit.components.v1 as components
 
 # --- 1. TACTICAL UI SETUP ---
-st.set_page_config(page_title="BAYOSPEL GLOBAL OS", layout="wide", initial_sidebar_state="expanded")
+st.set_page_config(
+    page_title="BAYOSPEL GLOBAL OS v5.0", 
+    layout="wide", 
+    initial_sidebar_state="expanded"
+)
 
 # --- 2. THE SUPABASE ENGINE ---
 try:
@@ -64,11 +73,15 @@ if not st.session_state.access_granted:
                 width: 160px;
                 margin-bottom: 20px;
             }}
-            .stTabs [data-baseweb="tab-list"] {{ gap: 20px; justify-content: center; }}
+            .stTabs [data-baseweb="tab-list"] {{ 
+                gap: 20px; 
+                justify-content: center; 
+            }}
             .stTabs [data-baseweb="tab"] {{
                 color: #00FF41 !important;
                 border: 1px solid #333;
                 padding: 10px 20px;
+                background-color: transparent !important;
             }}
             .stTabs [aria-selected="true"] {{
                 background-color: #00FF41 !important;
@@ -77,8 +90,8 @@ if not st.session_state.access_granted:
         </style>
         <div class="gatekeeper-container">
             <img src="{logo_data.LOGO_BASE64}" class="glow-img">
-            <div class="welcome-text">DEBAM AI OS v4.9</div>
-            <div class="boss-text">SECURE TERMINAL ACCESS</div>
+            <div class="welcome-text">DEBAM AI OS v5.0</div>
+            <div class="boss-text">SECURE TERMINAL ACCESS - COMMANDER BAYONLE</div>
         </div>
         """,
         unsafe_allow_html=True
@@ -92,7 +105,6 @@ if not st.session_state.access_granted:
         with login_tab:
             email = st.text_input("OPERATIONAL EMAIL", key="l_email")
             pwd = st.text_input("ACCESS PASSWORD", type="password", key="l_pwd")
-            
             status_placeholder = st.empty()
             
             if st.button("INITIALIZE SESSION", use_container_width=True):
@@ -103,7 +115,7 @@ if not st.session_state.access_granted:
                         status_placeholder.success("AUTHENTICATED. WELCOME BOSS.")
                         time.sleep(0.5)
                         st.rerun()
-                except Exception as e:
+                except Exception:
                     if not st.session_state.access_granted:
                         status_placeholder.error("INVALID CREDENTIALS. ACCESS DENIED.")
 
@@ -118,24 +130,26 @@ if not st.session_state.access_granted:
                         supabase.auth.sign_up({"email": new_email, "password": new_pwd})
                         st.info("Registration complete. Try logging in!")
                     except Exception as e:
-                        st.error(f"Error: {e}")
+                        st.error(f"Error during registration: {e}")
                 else:
                     st.warning("Passwords do not match!")
     
+    # CRITICAL: This stop MUST be indented so it only stops
+    # the app if the user is NOT logged in.
     st.stop()
 
 # --- 4. PWA INSTALLATION ENGINE ---
 components.html(
-    """
+    f"""
     <script>
-    navigator.serviceWorker.getRegistrations().then(function(registrations) {
-        for(let registration of registrations) { registration.unregister(); }
-    });
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', function() {
+    navigator.serviceWorker.getRegistrations().then(function(registrations) {{
+        for(let registration of registrations) {{ registration.unregister(); }}
+    }});
+    if ('serviceWorker' in navigator) {{
+      window.addEventListener('load', function() {{
         navigator.serviceWorker.register('https://raw.githubusercontent.com/Bayospel/cyber_debam/main/service-worker.js');
-      });
-    }
+      }});
+    }}
     </script>
     <link rel="manifest" href="https://raw.githack.com/Bayospel/cyber_debam/main/manifest.json?v=2">
     <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/Bayospel/cyber_debam/main/logo.png">
@@ -157,8 +171,13 @@ st.markdown(f"""
         background-size: 45%;
     }}
     
-    [data-testid="stSidebar"] {{ background-color: #0a0a0a; border-right: 1px solid #00FF41; }}
-    [data-testid="stSidebar"] p, [data-testid="stSidebar"] label {{ color: #FFFFFF !important; }}
+    [data-testid="stSidebar"] {{ 
+        background-color: #0a0a0a; 
+        border-right: 1px solid #00FF41; 
+    }}
+    [data-testid="stSidebar"] p, [data-testid="stSidebar"] label {{ 
+        color: #FFFFFF !important; 
+    }}
     
     [data-testid="stChatMessage"] {{
         background-color: rgba(26, 26, 26, 0.8) !important;
@@ -191,17 +210,39 @@ st.markdown(f"""
         border: 1px solid #00FF41 !important;
     }}
     [data-testid="stChatMessageAvatarAssistant"] svg, 
-    [data-testid="stChatMessageAvatarAssistant"] span {{ display: none !important; }}
+    [data-testid="stChatMessageAvatarAssistant"] span {{ 
+        display: none !important; 
+    }}
 
-    .stChatMessage p {{ color: #FFFFFF !important; font-size: 1.1rem !important; line-height: 1.6; }}
+    .stChatMessage p {{ 
+        color: #FFFFFF !important; 
+        font-size: 1.1rem !important; 
+        line-height: 1.6; 
+    }}
     .stChatMessage strong {{ color: #00FF41 !important; }}
     .stChatInput textarea {{ color: #00FF41 !important; }}
-    .stButton>button {{ background-color: #00FF41; color: black; font-weight: bold; width: 100%; border-radius: 10px; border: none; }}
-    .stButton>button:hover {{ background-color: #00cc33; color: white; }}
+    
+    .stButton>button {{ 
+        background-color: #00FF41; 
+        color: black; 
+        font-weight: bold; 
+        width: 100%; 
+        border-radius: 10px; 
+        border: none; 
+    }}
+    .stButton>button:hover {{ 
+        background-color: #00cc33; 
+        color: white; 
+    }}
+    
+    /* Extra Styling for Data Displays */
+    .stCodeBlock {{
+        border: 1px solid #00FF41 !important;
+    }}
 </style>
 """, unsafe_allow_html=True)
 
-# --- 6. SMART KEY ROTATOR ENGINE ---
+# --- 6. SMART KEY ROTATOR & HELPER ENGINES ---
 def get_groq_client():
     try:
         keys = st.secrets["GROQ_KEYS"]
@@ -217,19 +258,63 @@ def get_manual():
             return content + " IMPORTANT: You speak English, Yoruba, and Pidgin fluently. Mix them. Respect Bayonle always."
     except:
         return """You are DEBAM, a Tactical AI Commander built by the Big Boss Bayonle. 
-        You speak English, Yoruba, and Pidgin fluently. 
-        Mix them naturally (e.g. 'Boss, mo ti set, iyalaya won!'). 
+        You speak English, Yoruba, and Pidgin fluently. Mix them naturally. 
         Use slang like: Abeg, Omo, No shaking, Standard, Correct. 
         Respect Bayonle as the Only Boss."""
 
-# --- 7. SIDEBAR SYSTEM ---
+# --- 7. NEW TACTICAL TOOL FUNCTIONS ---
+
+def extract_exif_data(img_file):
+    try:
+        image = Image.open(img_file)
+        info = image._getexif()
+        if not info:
+            return "No Metadata Found in this image file."
+        
+        exif_table = {}
+        for tag, value in info.items():
+            decoded = TAGS.get(tag, tag)
+            exif_table[decoded] = value
+        return exif_table
+    except Exception as e:
+        return f"Metadata Extraction Error: {e}"
+
+def run_dns_recon(domain):
+    recon_results = ""
+    record_types = ['A', 'MX', 'NS', 'TXT', 'SOA']
+    for r_type in record_types:
+        try:
+            answers = dns.resolver.resolve(domain, r_type)
+            recon_results += f"\n--- {r_type} RECORDS ---\n"
+            for data in answers:
+                recon_results += f" > {data}\n"
+        except Exception:
+            continue
+    return recon_results if recon_results else "No public DNS records found for this domain."
+
+def scan_target_ports(target_ip):
+    open_found = []
+    target_ports = [21, 22, 23, 25, 53, 80, 110, 443, 3306, 3389, 8080]
+    for port in target_ports:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(0.4)
+        result = sock.connect_ex((target_ip, port))
+        if result == 0:
+            open_found.append(port)
+        sock.close()
+    return open_found
+
+# --- 8. SIDEBAR SYSTEM ---
 st.sidebar.image(logo_data.LOGO_BASE64, use_container_width=True)
-st.sidebar.title("💀 DEBAM OS v4.8")
+st.sidebar.title("💀 DEBAM OS v5.0")
 st.sidebar.markdown(f"<span style='color:#00FF41'>Commander:</span> <span style='color:white'>Bayonle</span>", unsafe_allow_html=True)
 
 menu = st.sidebar.radio("SQUAD SELECTION", [
     "AI Commander", 
     "Web Recon (Scanner)", 
+    "Metadata Exorcist",
+    "DNS Hijacker",
+    "Port Sentinel",
     "Network Eye (Shodan)", 
     "Target Tracker (OSINT)", 
     "Exploit Lab (CVE)", 
@@ -242,7 +327,7 @@ if st.sidebar.button("LOCK SYSTEM (LOGOUT)"):
     st.session_state.access_granted = False
     st.rerun()
 
-# --- 8. FUNCTIONAL MODULES ---
+# --- 9. FUNCTIONAL MODULES ---
 
 # MODULE 1: AI COMMANDER
 if menu == "AI Commander":
@@ -272,10 +357,46 @@ if menu == "AI Commander":
             except:
                 st.error("COMMUNICATION ERROR: SIGNAL LOST.")
 
+# MODULE: METADATA EXORCIST
+elif menu == "Metadata Exorcist":
+    st.title("📸 IMAGE METADATA EXORCIST")
+    st.write("Upload a photo to extract hidden camera and GPS information.")
+    img_file = st.file_uploader("Choose an image...", type=["jpg", "jpeg", "png"])
+    if img_file is not None:
+        st.image(img_file, caption="Target Uploaded", width=400)
+        if st.button("RUN DEEP EXTRACTION"):
+            with st.spinner("Decoding image headers..."):
+                metadata = extract_exif_data(img_file)
+                st.json(metadata)
+
+# MODULE: DNS HIJACKER
+elif menu == "DNS Hijacker":
+    st.title("🔗 DNS RECORD RECON")
+    st.write("Identify domain ownership and infrastructure mail servers.")
+    domain_input = st.text_input("Enter Target Domain (e.g. apple.com):")
+    if st.button("INITIALIZE DNS QUERY"):
+        if domain_input:
+            with st.spinner("Querying Global DNS Cluster..."):
+                dns_data = run_dns_recon(domain_input)
+                st.code(dns_data)
+
+# MODULE: PORT SENTINEL
+elif menu == "Port Sentinel":
+    st.title("🛡️ PORT SENTINEL SCANNER")
+    st.write("Check for open service doors on target IP addresses.")
+    target_ip = st.text_input("Enter Target IP Address:")
+    if st.button("EXECUTE PROBE"):
+        if target_ip:
+            with st.spinner(f"Probing {target_ip} common ports..."):
+                found = scan_target_ports(target_ip)
+                if found:
+                    st.warning(f"CRITICAL: Found open ports: {found}")
+                else:
+                    st.success("Target appears stealthy. No common ports open.")
+
 # MODULE 2: WEB RECON
 elif menu == "Web Recon (Scanner)":
     st.title("🌐 WEB RECONNAISSANCE")
-    st.write("Deep analysis of target website infrastructure.")
     target = st.text_input("Enter Target URL (e.g., example.com):")
     if st.button("Start Full Recon Scan"):
         if target:
@@ -285,13 +406,10 @@ elif menu == "Web Recon (Scanner)":
                     st.code(result)
                 except Exception as e:
                     st.error(f"Recon Error: {e}")
-        else:
-            st.warning("Commander, provide a target URL first!")
 
 # MODULE 3: NETWORK EYE (SHODAN)
 elif menu == "Network Eye (Shodan)":
     st.title("👁️ NETWORK EYE: IP ENRICHMENT")
-    st.write("Direct Shodan integration for port and vulnerability analysis.")
     ip_input = st.text_input("Enter Target IP Address:")
     if st.button("Run Instant Shodan Scan"):
         if ip_input:
@@ -301,13 +419,10 @@ elif menu == "Network Eye (Shodan)":
                     st.info(result)
                 except Exception as e:
                     st.error(f"Shodan Module Error: {e}")
-        else:
-            st.warning("I need an IP address to scan, Boss!")
 
 # MODULE 4: TARGET TRACKER
 elif menu == "Target Tracker (OSINT)":
     st.title("📍 GLOBAL TARGET TRACKER")
-    st.write("Phone number intelligence and carrier tracing.")
     phone = st.text_input("Enter Phone Number (with country code):")
     if st.button("Initialize Deep Trace"):
         if phone:
@@ -317,13 +432,10 @@ elif menu == "Target Tracker (OSINT)":
                     st.write(result)
                 except Exception as e:
                     st.error(f"Tracker Error: {e}")
-        else:
-            st.warning("Need a phone number for the trace.")
 
 # MODULE 5: EXPLOIT LAB
 elif menu == "Exploit Lab (CVE)":
     st.title("💉 EXPLOIT & VULN LAB")
-    st.write("Search the global CVE database for specific vulnerabilities.")
     cve = st.text_input("Enter CVE ID (e.g., CVE-2021-44228):")
     if st.button("Fetch Exploit Intelligence"):
         if cve:
@@ -337,7 +449,6 @@ elif menu == "Exploit Lab (CVE)":
 # MODULE 6: BRUTE FORCE SIMULATOR
 elif menu == "Brute Force Simulator":
     st.title("🔑 AUTHENTICATION TESTER")
-    st.write("Simulate brute force resistance and password entropy.")
     if st.button("Execute Attack Simulation"):
         try:
             with st.spinner("Running entropy calculations..."):
@@ -349,7 +460,6 @@ elif menu == "Brute Force Simulator":
 # MODULE 7: PHISH-CHECK
 elif menu == "Phish-Check (URL Analyzer)":
     st.title("🎣 PHISH-CHECK ANALYZER")
-    st.write("Scan links for malicious patterns or phishing signatures.")
     url_input = st.text_input("Enter URL to analyze:")
     if st.button("Run Link Analysis"):
         if url_input:
@@ -361,8 +471,8 @@ elif menu == "Phish-Check (URL Analyzer)":
                 else:
                     st.success("✅ Link appears standard.")
 
-# --- 9. FOOTER STATUS ---
+# --- 10. FOOTER STATUS ---
 st.sidebar.markdown("---")
 st.sidebar.write("📡 Status: **ONLINE**")
-st.sidebar.write("⚡ Connection: **ENCRYPTED**")
-st.sidebar.write("📟 Interface: **v4.8 (SUPABASE)**")
+st.sidebar.write("⚡ Power: **ULTRA v5.0**")
+st.sidebar.write("📟 Interface: **SUPABASE SECURE**")
