@@ -8,3 +8,6 @@ nvdlib
 supabase
 Pillow
 dnspython
+folium
+pandas
+streamlit-folium
