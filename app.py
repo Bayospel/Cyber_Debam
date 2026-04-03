@@ -16,10 +16,13 @@ import bayo_brute
 import bayo_shodan  
 import logo_data    
 import streamlit.components.v1 as components
+from bs4 import BeautifulSoup
+from streamlit_folium import folium_static
+import folium
 
 # --- 1. TACTICAL UI SETUP ---
 st.set_page_config(
-    page_title="BAYOSPEL GLOBAL OS v5.2", 
+    page_title="BAYOSPEL GLOBAL OS v2.0", 
     layout="wide", 
     initial_sidebar_state="expanded"
 )
