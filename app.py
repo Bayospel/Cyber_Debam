@@ -28,7 +28,6 @@ except Exception as e:
 if "access_granted" not in st.session_state:
     st.session_state.access_granted = False
 
-# This block handles the login screen
 if not st.session_state.access_granted:
     st.markdown(
         f"""
@@ -93,13 +92,20 @@ if not st.session_state.access_granted:
         with login_tab:
             email = st.text_input("OPERATIONAL EMAIL", key="l_email")
             pwd = st.text_input("ACCESS PASSWORD", type="password", key="l_pwd")
+            
+            status_placeholder = st.empty()
+            
             if st.button("INITIALIZE SESSION", use_container_width=True):
                 try:
                     res = supabase.auth.sign_in_with_password({"email": email, "password": pwd})
-                    st.session_state.access_granted = True
-                    st.rerun()
-                except:
-                    st.error("INVALID CREDENTIALS. ACCESS DENIED.")
+                    if res.user:
+                        st.session_state.access_granted = True
+                        status_placeholder.success("AUTHENTICATED. WELCOME BOSS.")
+                        time.sleep(0.5)
+                        st.rerun()
+                except Exception as e:
+                    if not st.session_state.access_granted:
+                        status_placeholder.error("INVALID CREDENTIALS. ACCESS DENIED.")
 
         with signup_tab:
             new_email = st.text_input("EMAIL ADDRESS", key="s_email")
@@ -116,11 +122,9 @@ if not st.session_state.access_granted:
                 else:
                     st.warning("Passwords do not match!")
     
-    # INDENTED STOP: This only stops the script if NOT logged in.
     st.stop()
 
 # --- 4. PWA INSTALLATION ENGINE ---
-# Everything from here down only runs if access_granted is True
 components.html(
     """
     <script>
