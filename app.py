@@ -308,4 +308,44 @@ elif menu == "Exploit Lab (CVE)":
         if cve:
             with st.spinner("Searching exploit databases..."):
                 try:
-                    info = bayo_exploit
+                    info = bayo_exploit.get_exploit_info(cve)
+                    st.info(info)
+                except Exception as e:
+                    st.error(f"Exploit Lab Error: {e}")
+        else:
+            st.warning("Drop a CVE ID, Boss.")
+
+# MODULE 6: BRUTE FORCE SIMULATOR
+elif menu == "Brute Force Simulator":
+    st.title("🔑 AUTHENTICATION TESTER")
+    st.write("Simulate brute force resistance and password entropy.")
+    if st.button("Execute Attack Simulation"):
+        try:
+            with st.spinner("Running entropy calculations..."):
+                res = bayo_brute.run_sim()
+                st.success(res)
+        except Exception as e:
+            st.error(f"Simulator Error: {e}")
+
+# MODULE 7: PHISH-CHECK
+elif menu == "Phish-Check (URL Analyzer)":
+    st.title("🎣 PHISH-CHECK ANALYZER")
+    st.write("Scan links for malicious patterns or phishing signatures.")
+    url_input = st.text_input("Enter URL to analyze:")
+    if st.button("Run Link Analysis"):
+        if url_input:
+            with st.spinner("Analyzing URL structure..."):
+                if "http://" in url_input:
+                    st.error("🚨 MALICIOUS: Link uses insecure HTTP. High Risk!")
+                elif "verify" in url_input or "login" in url_input or "update" in url_input:
+                    st.warning("⚠️ SUSPICIOUS: URL contains phishing keywords. Stay alert.")
+                else:
+                    st.success("✅ Link appears standard. No malicious signatures detected.")
+        else:
+            st.warning("Need a link to analyze, Commander.")
+
+# --- 8. FOOTER STATUS ---
+st.sidebar.markdown("---")
+st.sidebar.write("📡 Status: **ONLINE**")
+st.sidebar.write("⚡ Connection: **ENCRYPTED**")
+st.sidebar.write("📟 Interface: **v4.5 (TACTICAL)**")
