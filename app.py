@@ -117,8 +117,7 @@ if not st.session_state.access_granted:
                         st.error(f"Error: {e}")
                 else:
                     st.warning("Passwords do not match!")
-    st.stop()
-)
+st.stop()
 
 
 # --- 4. PWA INSTALLATION ENGINE ---
