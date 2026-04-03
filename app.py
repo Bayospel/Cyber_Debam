@@ -332,26 +332,25 @@ def scan_target_ports(target_ip):
         sock.close()
     return open_found
 
-# --- 8. SIDEBAR SYSTEM ---
+# --- 8. SIDEBAR & MENU ---
 st.sidebar.image(logo_data.LOGO_BASE64, use_container_width=True)
-st.sidebar.title("💀 DEBAM OS v5.2")
-menu = st.sidebar.radio("SQUAD SELECTION", [
-    "AI Commander", 
-    "Strike Monitor & Live Map", # NEW
-    "Reverse Image Recon",     # NEW
-    "Web Recon (Scanner)", 
-    "Metadata Exorcist",
-    "DNS Hijacker",
-    "Port Sentinel",
-    "Network Eye (Shodan)", 
-    "Target Tracker (OSINT)", 
-    "Exploit Lab (CVE)", 
-    "Brute Force Simulator",
-    "Phish-Check (URL Analyzer)",
-    "Osint Ghost Scraper",
-    "Breach Check (Data Leaks)"
-    
+menu = st.sidebar.radio("CHOOSE A TOOL", [
+    "💬 Chat with DEBAM AI", 
+    "📍 Track Who Clicks My Link", 
+    "🔍 Website Info & Email Grabber", 
+    "🔓 Check My Data Leaks", 
+    "🖼️ Find Where a Photo is From", 
+    "🌐 Website Security Checker", 
+    "📸 Hidden Photo Data Finder", 
+    "🔗 Check Web Address (DNS)", 
+    "🛡️ Server Port Scanner", 
+    "👁️ Global Device Search (Shodan)", 
+    "📱 Phone Number Tracker", 
+    "💉 Exploit Database (CVE)", 
+    "🔑 Password Test Simulator",
+    "🎣 Detect Fake Links (Phish-Check)"
 ])
+
 
 st.sidebar.markdown("---")
 if st.sidebar.button("LOCK SYSTEM (LOGOUT)"):
@@ -360,8 +359,8 @@ if st.sidebar.button("LOCK SYSTEM (LOGOUT)"):
 
 # --- 9. FUNCTIONAL MODULES ---
 
-if menu == "AI Commander":
-    st.title("📟 TACTICAL BRAIN INTERFACE")
+if menu == "💬 Chat with DEBAM AI":
+    st.title("📟 DEBAM BRAIN INTERFACE")
     if "messages" not in st.session_state: st.session_state.messages = []
     for m in st.session_state.messages:
         with st.chat_message(m["role"]): st.markdown(m["content"])
@@ -376,8 +375,8 @@ if menu == "AI Commander":
                 st.session_state.messages.append({"role": "assistant", "content": r.choices[0].message.content})
             except: st.error("SIGNAL LOST.")
 
-elif menu == "Strike Generator (Trap)":
-    st.title("⚡ TACTICAL STRIKE: LIVE MONITOR")
+elif menu == "📍 Track Who Clicks My Link":
+    st.title("🛰️ STRIKE MONITOR & LIVE MAP")
     st.write("Generate a tracked link. When clicked, DEBAM logs their IP and device info below.")
     dest_url = st.text_input("Enter Destination URL (e.g., https://instagram.com)")
     if st.button("GENERATE TRAP"):
@@ -399,7 +398,7 @@ elif menu == "Strike Generator (Trap)":
         supabase.table("trapped_targets").delete().neq("ip_address", "0").execute()
         st.rerun()
 
-elif menu == "Reverse Image Recon":
+elif menu == "🖼️ Find Where a Photo is From":
     st.title("🔎 REVERSE IMAGE RECON")
     up = st.file_uploader("Upload Target Photo", type=['jpg','png','jpeg'])
     if up:
@@ -409,19 +408,19 @@ elif menu == "Reverse Image Recon":
         with c1: st.link_button("Search Google Lens", "https://lens.google.com/upload")
         with c2: st.link_button("Search Yandex (High Precision)", "https://yandex.com/images/search")
 
-elif menu == "Metadata Exorcist":
+elif menu == "📸 Hidden Photo Data Finder":
     st.title("📸 IMAGE METADATA EXORCIST")
     img_file = st.file_uploader("Choose an image...", type=["jpg", "jpeg", "png"])
     if img_file and st.button("RUN DEEP EXTRACTION"):
         st.json(extract_exif_data(img_file))
 
-elif menu == "DNS Hijacker":
+elif menu == "🔗 Check Web Address (DNS)":
     st.title("🔗 DNS RECORD RECON")
     domain_input = st.text_input("Enter Target Domain:")
     if st.button("INITIALIZE DNS QUERY"):
         st.code(run_dns_recon(domain_input))
 
-elif menu == "Port Sentinel":
+elif menu == "🛡️ Server Port Scanner":
     st.title("🛡️ PORT SENTINEL SCANNER")
     target_ip = st.text_input("Enter Target IP:")
     if st.button("EXECUTE PROBE"):
@@ -433,37 +432,37 @@ elif menu == "Web Recon (Scanner)":
     if st.button("Start Full Recon Scan"):
         st.code(bayo_recon.full_recon(target))
 
-elif menu == "Network Eye (Shodan)":
-    st.title("👁️ NETWORK EYE: IP ENRICHMENT")
+elif menu == "👁️ Global Device Search (Shodan)":
+    st.title("👁️ NETWORK EYE (SHODAN)")
     ip_input = st.text_input("Enter Target IP:")
     if st.button("Run Instant Shodan Scan"):
         st.info(bayo_shodan.quick_scan(ip_input))
 
-elif menu == "Target Tracker (OSINT)":
+elif menu == "📱 Phone Number Tracker":
     st.title("📍 GLOBAL TARGET TRACKER")
     phone = st.text_input("Phone Number:")
     if st.button("Initialize Deep Trace"):
         st.write(bayo_track.track_number(phone))
 
-elif menu == "Exploit Lab (CVE)":
+elif menu == "💉 Exploit Database (CVE)":
     st.title("💉 EXPLOIT & VULN LAB")
     cve = st.text_input("CVE ID:")
     if st.button("Fetch Exploit Intelligence"):
         st.info(bayo_exploit.get_exploit_info(cve))
 
-elif menu == "Brute Force Simulator":
+elif menu == "🔑 Password Test Simulator":
     st.title("🔑 AUTHENTICATION TESTER")
     if st.button("Execute Attack Simulation"):
         st.success(bayo_brute.run_sim())
 
-elif menu == "Phish-Check (URL Analyzer)":
+elif menu == "🎣 Detect Fake Links (Phish-Check)":
     st.title("🎣 PHISH-CHECK ANALYZER")
     url_input = st.text_input("Enter URL:")
     if st.button("Run Link Analysis"):
         if "http://" in url_input: st.error("🚨 MALICIOUS: Insecure HTTP!")
         else: st.success("✅ Link looks standard.")
 
-elif menu == "Strike Monitor & Live Map":
+elif menu == "📍 Track Who Clicks My Link":
     st.title("🛰️ STRIKE MONITOR & LIVE MAP")
     dest_url = st.text_input("Enter Destination URL")
     if st.button("GENERATE TRAP"):
@@ -489,8 +488,8 @@ elif menu == "Strike Monitor & Live Map":
             st.table(df[['ip_address', 'city', 'clicked_at', 'user_agent']])
         else: st.info("No targets captured yet.")
 
-elif menu == "OSINT Ghost Scraper":
-    st.title("🕵️‍♂️ GHOST SCRAPER")
+elif menu == "🔍 Website Info & Email Grabber":
+    st.title("🕵️‍♂️ WEBSITE & EMAIL SCRAPER")
     t_url = st.text_input("Enter URL to Scrape:")
     if st.button("INITIALIZE SCRAPE"):
         try:
@@ -502,7 +501,7 @@ elif menu == "OSINT Ghost Scraper":
             st.write("Meta Description:", soup.find("meta", {"name":"description"}))
         except: st.error("Connection Failed.")
 
-elif menu == "Breach Check (Data Leaks)":
+elif menu == "🔓 Check My Data Leaks":
     st.title("🛡️ DATA LEAK DETECTOR")
     em = st.text_input("Enter Email to Scan:")
     if st.button("CHECK BREACHES"):
@@ -515,4 +514,4 @@ elif menu == "Breach Check (Data Leaks)":
 st.sidebar.markdown("---")
 st.sidebar.warning("⚠️ **LEGAL NOTICE:**\nThis system is for **Educational Purposes Only**. Unauthorized testing is prohibited, I will not be responsible for any illegal actions.")
 st.sidebar.write("📡 Status: ** DEBAM ONLINE**")
-st.sidebar.write("⚡ Power: **ULTRA v5.2**")
+st.sidebar.write("⚡ Power: **ULTRA v2.0**")
