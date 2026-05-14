@@ -441,10 +441,34 @@ elif menu == "👁️ Global Device Search (Shodan)":
         st.info(bayo_shodan.quick_scan(ip_input))
 
 elif menu == "📱 Phone Number Tracker":
-    st.title("📍 GLOBAL TARGET TRACKER")
-    phone = st.text_input("Phone Number:")
+    st.title("📍 GLOBAL TARGET TRACKER (DEEP ENRICHMENT)")
+    phone = st.text_input("Enter Target Phone (Include + prefix, e.g., +1 for US):")
+    
     if st.button("Initialize Deep Trace"):
-        st.write(bayo_track.track_number(phone))
+        if not phone.startswith("+"):
+            st.warning("⚠️ Please include the country code (e.g., +1 for USA, +234 for Nigeria).")
+        else:
+            with st.spinner("📡 Bypassing Identity Masks & Fetching Coordinates..."):
+                # Calling your newly updated bayo_track.py engine
+                success, report, lat, lng = bayo_track.track_number(phone)
+                
+                if success:
+                    st.success("🎯 TRACE COMPLETED")
+                    # Display the full intelligence report
+                    st.code(report)
+                    
+                    # Display the live map tracker if coordinates exist
+                    if lat != 0 and lng != 0:
+                        st.subheader("📍 LIVE TARGET LOCATION")
+                        m = folium.Map(location=[lat, lng], zoom_start=12, tiles="CartoDB dark_matter")
+                        folium.Marker([lat, lng], popup=f"Target: {phone}").add_to(m)
+                        folium_static(m)
+                        
+                        # Quick link for your Samsung S21+ GPS
+                        st.link_button("🚀 Open in Google Maps", f"https://www.google.com/maps?q={lat},{lng}")
+                else:
+                    st.error(report)
+
 
 elif menu == "💉 Exploit Database (CVE)":
     st.title("💉 EXPLOIT & VULN LAB")
