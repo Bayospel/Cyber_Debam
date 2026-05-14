@@ -449,7 +449,7 @@ elif menu == "📱 Phone Number Tracker":
             st.warning("⚠️ Please include the country code (e.g., +1 for USA, +234 for Nigeria).")
         else:
             with st.spinner("📡 Bypassing Identity Masks & Fetching Coordinates..."):
-                # Calling your newly updated bayo_track.py engine
+                # Calling your bayo_track.py engine
                 success, report, lat, lng = bayo_track.track_number(phone)
                 
                 if success:
@@ -465,9 +465,31 @@ elif menu == "📱 Phone Number Tracker":
                         folium_static(m)
                         
                         # Quick link for your Samsung S21+ GPS
-                        st.link_button("🚀 Open in Google Maps", f"https://www.google.com/maps?q={lat},{lng}")
+                        st.link_button("🚀 Open in Google Maps", f"https://www.google.com/maps/search/?api=1&query={lat},{lng}")
+
+                    # --- NEW: TACTICAL RECON BUTTONS (Bypass Trestle 403) ---
+                    st.markdown("---")
+                    st.subheader("🔍 DEEP IDENTITY RECON")
+                    
+                    # Cleaning the number for search links
+                    clean_num = phone.replace("+", "").replace(" ", "")
+                    
+                    recon_col1, recon_col2 = st.columns(2)
+                    
+                    with recon_col1:
+                        st.markdown("**👤 Name & Identity**")
+                        st.link_button("Find Name (Truecaller)", f"https://www.truecaller.com/search/global/{clean_num}")
+                        st.link_button("Find Photo (Sync.Me)", f"https://sync.me/search/?number={clean_num}")
+                    
+                    with recon_col2:
+                        st.markdown("**🎂 DOB & Social Recon**")
+                        # Dork 1: Search for birthday mentions
+                        st.link_button("Dork: Find Birthday", f"https://www.google.com/search?q=%22{phone}%22+OR+%22{clean_num}%22+%22birthday%22+OR+%22born%22")
+                        # Dork 2: Find social media profiles
+                        st.link_button("Scan Social Profiles", f"https://www.google.com/search?q=site:facebook.com+OR+site:instagram.com+OR+site:linkedin.com+%22{phone}%22")
                 else:
                     st.error(report)
+
 
 
 elif menu == "💉 Exploit Database (CVE)":
