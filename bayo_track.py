@@ -32,7 +32,7 @@ def track_number(number_str):
                 
                 identity_report = f"\n👤 IDENTITY MASK BYPASSED:\nName: {name}\nDOB: {dob}\nFamily: {relatives if relatives else 'None Found'}"
         except:
-            identity_report = "\n[!] Identity server timeout."
+            identity_report = "\n[!] Identity server timeout or non-US target."
 
         # 3. PRECISE GEOLOCATION
         results = geocoder_api.geocode(location_desc)
@@ -60,45 +60,4 @@ Status: ACCESS SUCCESSFUL
 
     except Exception as e:
         return False, f"Error: {e}", 0, 0
-        return False, f"Error: {e}. Ensure you include the + sign (e.g., +1...)", 0, 0
-👤 IDENTITY MASK BYPASSED:
-Full Name: {name}
-Date of Birth: {dob}
-Associates: {relatives if relatives else 'None Found'}
----------------------------"""
-        except:
-            identity_report = "\n[!] Identity server timeout or non-US target."
 
-        # 3. PRECISE GEOLOCATION (OpenCage)
-        results = geocoder_api.geocode(location_desc)
-        lat, lng, precise_address = 0, 0, "Unknown"
-
-        if results and len(results) > 0:
-            lat = results[0]['geometry']['lat']
-            lng = results[0]['geometry']['lng']
-            precise_address = results[0]['formatted']
-
-        # 4. FINAL TACTICAL REPORT
-        report = f"""
-[ DEBAM AI - DEEP TRACE REPORT ]
----------------------------
-Target: {number_str}
-Carrier: {service_provider}
-{identity_report}
-Location: {location_desc}
-Precise Region: {precise_address}
-Coordinates: {lat}, {lng}
-Map: https://www.google.com/maps?q={lat},{lng}
----------------------------
-Status: ACCESS SUCCESSFUL
-"""
-        return True, report, lat, lng
-
-    except Exception as e:
-        return False, f"Error: {e}. Ensure you include the + sign (e.g., +1...)", 0, 0
-            return True, report, lat, lng
-        else:
-            return False, "Boss, I see the region but I no fit get the coordinates.", 0, 0
-
-    except Exception as e:
-        return False, f"Error: {e}. Ensure you include the + sign (e.g., +234...)", 0, 0
